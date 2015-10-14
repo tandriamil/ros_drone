@@ -1,13 +1,13 @@
 <package>
-  <description brief="ros_drone">
+  <description brief="ros">
 
-     ros_drone
+     ros
 
   </description>
   <author>Yann</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ros_drone</url>
+  <url>http://ros.org/wiki/ros</url>
   <depend package="std_msgs"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
