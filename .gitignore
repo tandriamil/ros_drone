@@ -1,4 +1,3 @@
 *.log
 *~
 build
-catkin_workspace/clean_libraries.sh
