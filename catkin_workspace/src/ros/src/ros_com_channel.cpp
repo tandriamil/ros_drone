@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <time.h>
 
-#include "com_channel_ros.h"
+#include "../include/ros/ros_com_channel.h"
 
 
 struct jakopter_com_channel_t {

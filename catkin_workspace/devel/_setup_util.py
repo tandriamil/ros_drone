@@ -260,7 +260,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         # environment at generation time
-        CMAKE_PREFIX_PATH = '/home/yann/Documents/Rennes_M1_Info/PROJETDRONE2/ros_drone/catkin_workspace/devel;/home/yann/Documents/Developpement/ros_catkin_ws/install_isolated'.split(';')
+        CMAKE_PREFIX_PATH = '/home/yann/Documents/Rennes_M1_Info/PROJETDRONE2/tuto_ROS/catkin_ws/devel;/home/yann/Documents/Rennes_M1_Info/PROJETDRONE2/ros_drone/catkin_workspace/devel;/home/yann/Documents/Developpement/ros_catkin_ws/install_isolated'.split(';')
         # prepend current workspace if not already part of CPP
         base_path = os.path.dirname(__file__)
         if base_path not in CMAKE_PREFIX_PATH:

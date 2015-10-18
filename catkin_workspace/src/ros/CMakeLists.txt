@@ -118,9 +118,16 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(ros
-#   src/${PROJECT_NAME}/ros.cpp
-# )
+## add_library(ros_cmd src/ros_cmd.cpp)
+## add_library(ros_com_master src/ros_com_master.cpp)
+## add_library(ros_coords src/ros_coords.cpp)
+## add_library(ros_navdata src/ros_navdata.cpp)
+## add_library(ros_user_input src/ros_user_input.cpp)
+## add_library(ros_utils src/ros_utils.cpp)
+## add_library(ros_drone src/ros_drone.cpp)
+
+## add_library(ros_com_channel src/ros_com_channel.cpp) ## Does not compile :(
+## add_library(ros_lua_bindings src/ros_lua_bindings.cpp) ## Does not compile :(
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -128,16 +135,24 @@ include_directories(
 # add_dependencies(ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(ros_node src/ros_node.cpp)
+## add_executable(talker src/talker.cpp)
+
+## Specify libraries to link a library or executable target against
+## target_link_libraries(talker ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(ros_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(ros_node
-#   ${catkin_LIBRARIES}
-# )
+## add_executable(listener src/listener.cpp)
+## target_link_libraries(listener ${catkin_LIBRARIES})
+
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+add_executable(cmd src/ros_cmd.cpp)
+target_link_libraries(cmd ${CURSES_LIBRARIES})
+target_link_libraries(cmd ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##
