@@ -2,3 +2,4 @@ clean_libraries.sh
 build
 devel
 src/CMakeLists.txt
+*~
