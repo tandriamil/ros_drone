@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 
 		// Subscribes to the navdata topic
 		// Returns a Subscriber object
-		ros::Subscriber sub = n.subscribe("navdata", 1000, navdataCallback);
+		ros::Subscriber sub = n.subscribe("pikopter", 1000, navdataCallback);
 
 		// Enters a loop, calling message callbacks as fast as possible
 		ros::spin();

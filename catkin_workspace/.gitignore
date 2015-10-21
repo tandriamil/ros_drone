@@ -1,12 +1,4 @@
 clean_libraries.sh
 build
-
+devel/*
 src/CMakeLists.txt
-
-devel/.catkin
-devel/_setup_util.py
-devel/lib/pkgconfig/ros.pc
-devel/setup.sh
-devel/share/ros/cmake/rosConfig.cmake
-devel/.rosinstall
-devel/lib/ros/cmd
