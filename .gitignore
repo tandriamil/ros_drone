@@ -2,6 +2,7 @@ clean_libraries.sh
 build
 
 src/CMakeLists.txt
+.catkin_tools
 
 devel/.catkin
 devel/_setup_util.py
