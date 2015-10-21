@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ros)
+project(roscopter)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -149,9 +149,9 @@ include_directories(
 
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
-add_executable(cmd src/ros_cmd.cpp)
-target_link_libraries(cmd ${CURSES_LIBRARIES})
-target_link_libraries(cmd ${catkin_LIBRARIES})
+add_executable(pikopter_cmd src/pikopter_cmd.cpp)
+target_link_libraries(pikopter_cmd ${CURSES_LIBRARIES})
+target_link_libraries(pikopter_cmd ${catkin_LIBRARIES})
 
 
 #############
