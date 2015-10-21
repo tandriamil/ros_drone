@@ -1,4 +1,4 @@
 clean_libraries.sh
 build
-devel/*
+devel
 src/CMakeLists.txt
