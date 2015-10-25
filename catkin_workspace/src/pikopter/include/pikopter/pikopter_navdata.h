@@ -1,24 +1,37 @@
-#ifndef ROS_NAVDATA_H
-#define ROS_NAVDATA_H
+#ifndef PIKOPTER_NAVDATA_H
+#define PIKOPTER_NAVDATA_H
 
-#include "ros_common.h"
-#include "ros_com_channel.h"
-#include "ros_com_master.h"
 
-#define PORT_NAVDATA	5554
-/* interval in seconds*/
-#define NAVDATA_INTERVAL 	1/15
+/* ################################### INCLUDES ################################### */
+// Pikotper common includes
+#include "pikopter_common.h"
+
+
+
+/* ################################### CONSTANTS ################################### */
+// The port used for the navdatas
+#define PORT_NAVDATA 5554
+
+// Interval in seconds
+#define NAVDATA_INTERVAL 1/15
+
+// A tag to say if it's a demo or not
 #define TAG_DEMO 0
-/*Tag for the checksum packet in full mode*/
+
+// Tag for the checksum packet in full mode
 #define TAG_CKS 0
 #define NAVDATA_NREADS_INT 4
 #define NAVDATA_NREADS_FLOAT 6
+
 // 2 spaces
 #define DEMO_LEN NAVDATA_NREADS_INT*(INT_LEN+1)+(NAVDATA_NREADS_FLOAT*FLOAT_LEN+1)+2
 
-/* Values in ctrl_state */
 
-/** Main value in the first 16 bits. */
+
+/* ################################### TYPE DEF ################################### */
+
+/* ########## State values ########## */
+// Main value in the first 16 bits
 typedef enum {
 	DEFAULT,
 	INIT,
@@ -33,7 +46,7 @@ typedef enum {
 	LOOP
 } ctrl_states;
 
-/** Specific value in the last 16 bits. */
+// Specific value in the last 16 bits
 typedef enum {
 	FLY_OK,
 	FLY_LOST_ALT,
@@ -44,6 +57,7 @@ typedef enum {
 	NO_VISION
 } fly_states;
 
+// Hover states
 typedef enum {
 	HOVER_OK,
 	HOVER_YAW,
@@ -61,106 +75,106 @@ typedef enum {
 	DEMO
 } hover_states;
 
+// Takeoff states
 typedef enum {
 	TAKEOFF_GROUND,
 	TAKEOFF_AUTO
 } takeoff_states;
 
+// Move states
 typedef enum {
 	GOTO_OK = 0,
 	GOTO_LOST_ALT,
 	GOTO_YAW
 } move_states;
 
+// Land states
 typedef enum {
 	CLOSED_LOOP,
 	OPEN_LOOP,
 	OPEN_LOOP_FAST
 } land_states;
 
+// Loop states
 typedef enum {
 	IMPULSION,
 	OPEN_LOOP_CTRL,
 	PLANIF_CTRL
 } loop_states;
 
-/* Navdata structs */
 
+/* ########## Navdata structures ########## */
+// Some options for the navdata paquets
 struct navdata_option {
-	/** type of the packet: DEMO, etc.*/
-	uint16_t  tag;
+	uint16_t  tag;  // Type of the packet: DEMO, etc.
 	uint16_t  size;
 	uint8_t   data[];
 };
 
+// The navdata paquet itself
 struct navdata {
-	/** Always 88776655 */
-	uint32_t    header;
-	/** Bit mask defined in SDK config.h */
-	uint32_t    ardrone_state;
-	/** Sequence number of the packet */
-	uint32_t    sequence;
-	/** True: vision computed by ardrone onboard chip*/
-	bool		vision_defined;
-
-	/** static pointer to generic options */
-	struct navdata_option  options[1];
+	uint32_t    header;  // Always 88776655
+	uint32_t    ardrone_state;  // Bit mask defined in SDK config.h
+	uint32_t    sequence;  // Sequence number of the packet
+	bool		vision_defined;  // True: vision computed by ardrone onboard chip
+	struct navdata_option options[1];  // Static pointer to generic options
 };
 
-struct navdata_demo
-{
-	/** Always 88776655 */
-	uint32_t   header;
-	/** Bit mask defined in SDK config.h */
-	uint32_t   ardrone_state;
-	/** Sequence number of the packet */
-	uint32_t   sequence;
-	/** True: vision computed by ardrone onboard chip */
-	bool	   vision_defined;
+// Navdata paquet for demo
+struct navdata_demo {
+	uint32_t   header;  // Always 88776655
+	uint32_t   ardrone_state;  // Bit mask defined in SDK config.h
+	uint32_t   sequence;  // Sequence number of the packet
+	bool	   vision_defined;  // True: vision computed by ardrone onboard chip
 
-	/** Type of the packet: must be TAG_DEMO.*/
-	uint16_t   tag;
-	/** Size of the packet in bytes */
-	uint16_t   size;
-	/** Flying state (landed, flying, hovering, etc.). */
-	uint32_t   ctrl_state;
-	/** Battery voltage filtered (mV) */
-	uint32_t   vbat_flying_percentage;
-	/** UAV's pitch in milli-degrees */
-	float32_t  theta;
-	/** UAV's roll in milli-degrees */
-	float32_t  phi;
-	/** UAV's yaw in milli-degrees */
-	float32_t  psi;
-	/** UAV's altitude in millimeters */
-	int32_t    altitude;
-	/** UAV's estimated linear velocity in millimeters/?s */
-	float32_t  vx;
-	/** UAV's estimated linear velocity in millimeters/?s */
-	float32_t  vy;
-	/** UAV's estimated linear velocity in millimeters/?s */
-	float32_t  vz;
-	/** Deprecated on ARdrone2.0*/
+	// Here are the specific values for demo mode
+	uint16_t   tag;  // Type of the packet: must be TAG_DEMO
+	uint16_t   size;  // Size of the packet in bytes
+	uint32_t   ctrl_state;  // Flying state (landed, flying, hovering, etc.)
+	uint32_t   vbat_flying_percentage;  // Battery voltage filtered (mV)
+
+	// UAV (Unmanned Aerial Vehicle ~ drone) state
+	float32_t  theta;  // UAV's pitch in milli-degrees
+	float32_t  phi;  // UAV's roll in milli-degrees
+	float32_t  psi;  // UAV's yaw in milli-degrees
+	int32_t    altitude;  // UAV's altitude in millimeters
+	float32_t  vx;  // UAV's estimated linear velocity in millimeters/s
+	float32_t  vy;  // UAV's estimated linear velocity in millimeters/s
+	float32_t  vz;  // UAV's estimated linear velocity in millimeters/s
+
+	// Deprecated on ARdrone2.0
 	uint32_t   num_frames;
-	/** Deprecated on ARdrone2.0*/
 	float32_t  detection_camera_rot[9];
-	/** Deprecated on ARdrone2.0*/
 	float32_t  detection_camera_trans[3];
-	/** Deprecated on ARdrone2.0*/
 	uint32_t   detection_tag_index;
-	/** Type of tag searched in detection */
-	uint32_t   detection_camera_type;
-	/** Deprecated on ARdrone2.0*/
+	uint32_t   detection_camera_type;  // NOT DEPRECATED, Type of tag searched in detection
 	float32_t  drone_camera_rot[9];
-	/** Deprecated on ARdrone2.0*/
 	float32_t  drone_camera_trans[3];
 };
 
+// The navdata structure, contains the basic struc and the demo one
 union navdata_t {
 	struct navdata raw;
 	struct navdata_demo demo;
 };
 
+
+
+/* ################################### Classes ################################### */
+/*!
+ * \brief Jakopter navdatas ros node
+ */
+class JakopterNavdatas {
+
+	// Public methods
+	public:
+
+	// Private methods
+	private:
+};
+
+
+/* Ancient methods
 int navdata_connect(const char* drone_ip);
 int navdata_disconnect();
 int jakopter_is_flying();
@@ -170,5 +184,6 @@ int navdata_no_sq();
 void debug_navdata_demo();
 const char* jakopter_navdata_timestamp();
 const char* jakopter_log_navdata();
+*/
 
 #endif
