@@ -6,16 +6,26 @@
 // System librairies used by pikopter
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
+#include <sys/types.h>
+#include <time.h>
+#include <limits.h>
+#include <pthread.h>
+#include <sys/uio.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 // Ros librairies in order to use them
-#include "ros_common.h"
-#include "ros_com_channel.h"
-#include "ros_com_master.h"
-
+//#include "ros_common.h"
+//#include "ros_com_channel.h"
+//#include "ros_com_master.h"
+//#include "pikopter_navdata.h"
+//#include "pikopter_cmd.h"
 
 
 /* ################################### CONSTANTS ################################### */
@@ -45,7 +55,7 @@ class PikopterNetwork {
 
 	// Public methods
 	public:
-		open_udp_socket(int portnum, struct sockaddr_in *serv_addr);
+		int open_udp_socket(int portnum, struct sockaddr_in *serv_addr, char* station_ip);
 };
 
 #endif

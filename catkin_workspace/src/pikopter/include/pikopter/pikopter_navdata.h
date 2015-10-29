@@ -23,6 +23,9 @@
 #define NAVDATA_NREADS_INT 4
 #define NAVDATA_NREADS_FLOAT 6
 
+#define float32_t float
+#define float64_t double
+
 // 2 spaces
 #define DEMO_LEN NAVDATA_NREADS_INT*(INT_LEN+1)+(NAVDATA_NREADS_FLOAT*FLOAT_LEN+1)+2
 

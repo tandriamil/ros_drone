@@ -118,16 +118,8 @@ include_directories(
 )
 
 ## Declare a C++ library
-## add_library(ros_cmd src/ros_cmd.cpp)
-## add_library(ros_com_master src/ros_com_master.cpp)
-## add_library(ros_coords src/ros_coords.cpp)
-## add_library(ros_navdata src/ros_navdata.cpp)
-## add_library(ros_user_input src/ros_user_input.cpp)
-## add_library(ros_utils src/ros_utils.cpp)
-## add_library(ros_drone src/ros_drone.cpp)
+add_library(pikopter_network src/pikopter_network.cpp)
 
-## add_library(ros_com_channel src/ros_com_channel.cpp) ## Does not compile :(
-## add_library(ros_lua_bindings src/ros_lua_bindings.cpp) ## Does not compile :(
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -147,10 +139,7 @@ include_directories(
 ## add_executable(listener src/listener.cpp)
 ## target_link_libraries(listener ${catkin_LIBRARIES})
 
-find_package(Curses REQUIRED)
-include_directories(${CURSES_INCLUDE_DIR})
 add_executable(pikopter_cmd src/pikopter_cmd.cpp)
-target_link_libraries(pikopter_cmd ${CURSES_LIBRARIES})
 target_link_libraries(pikopter_cmd ${catkin_LIBRARIES})
 
 
