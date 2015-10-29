@@ -1,7 +1,6 @@
 // Include the common.h
 #include "../include/pikopter/pikopter_common.h"
 
-using namespace std;
 
 /*!
  * \brief Open an UDP socket

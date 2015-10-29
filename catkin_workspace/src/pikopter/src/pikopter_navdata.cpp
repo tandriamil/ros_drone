@@ -1,327 +1,68 @@
-#include "../include/ros/ros_common.h"
-#include "../include/ros/ros_navdata.h"
-#include "../include/ros/ros_drone.h"
+// Include pikopter navdata headers
+#include "../include/pikopter/pikopter_navdata.h"
 
-#define LOG_LEN TSTAMP_LEN+DEMO_LEN+1
 
-/* The structure which contains navdata  */
-static union navdata_t data;
-/* The string which contains the timestamp of the last request.*/
-static char timestamp[TSTAMP_LEN+1];
-static void navdata_timestamp();
+/*!
+ * \brief Main function
+ *
+ * \param argc The number of arguments
+ * \param argv The arguments
+ */
+int main(int argc, char **argv) {
 
-jakopter_com_channel_t* nav_channel;
+	// Just return the main loop of PikopterNavdata
+	PikopterNavdata pn;
+	return pn.main_loop(argc, argv);
+}
 
-pthread_t navdata_thread;
 
-/* Guard that stops any function if connection isn't initialized.*/
-static bool stopped_navdata = true;
-/* Race condition between navdata reception and read the navdata.*/
-static pthread_mutex_t mutex_navdata = PTHREAD_MUTEX_INITIALIZER;
-/* Race condition between receive routine and disconnection.*/
-static pthread_mutex_t mutex_stopped = PTHREAD_MUTEX_INITIALIZER;
-/* Race condition between requesting timestamp and record of timestamp*/
-static pthread_mutex_t mutex_timestamp = PTHREAD_MUTEX_INITIALIZER;
+/*!
+ * \brief Main loop for the navdata node
+ *
+ * \param argc The number of arguments
+ * \param argv The arguments
+ */
+int PikopterNavdata::main_loop(int argc, char **argv) {
 
-/* Drone address + client address (required to set the port number)*/
-static struct sockaddr_in addr_drone_navdata, addr_client_navdata;
-static int sock_navdata;
+	// Initialize ros for this node
+	ros::init(argc, argv, "pikopter_navdata");
 
-static int recv_cmd()
-{
-	pthread_mutex_lock(&mutex_navdata);
+	// Create a node handle (fully initialize ros)
+	ros::NodeHandle navdata_node_handle;
+
+	// Check the command syntax
+	if (argc != 2) {
+		ROS_FATAL("Command syntax is:\n \t%s \"ip_address\"\n", argv[0]);
+		return -1;
+	}
+
+	// Put the rate for this node
+	ros::Rate loop_rate(NAVDATA_INTERVAL);
+
+	// Debug message
+	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_INTERVAL);
+
+	// Open the UDP port for the navadata node
+	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, argv[1]);
+
+	// Get the length of the socket
 	socklen_t len = sizeof(addr_drone_navdata);
 
-	int ret = recvfrom(sock_navdata, &data, sizeof(data), 0, (struct sockaddr*)&addr_drone_navdata, &len);
-	size_t offset = 0;
-	//fprintf(stderr,"FBO: Receiving navdata (%d)\n", data.demo.altitude); // use altitude 
-	switch (data.demo.tag) {
-		case TAG_DEMO:
-			jakopter_com_write_int(nav_channel, offset, data.demo.vbat_flying_percentage);
-			offset += sizeof(data.demo.vbat_flying_percentage);
-			jakopter_com_write_int(nav_channel, offset, data.demo.altitude);
-			offset += sizeof(data.demo.altitude);
-			jakopter_com_write_float(nav_channel, offset, data.demo.theta);
-			offset += sizeof(data.demo.theta);
-			jakopter_com_write_float(nav_channel, offset, data.demo.phi);
-			offset += sizeof(data.demo.phi);
-			jakopter_com_write_float(nav_channel, offset, data.demo.psi);
-			offset += sizeof(data.demo.psi);
-			jakopter_com_write_float(nav_channel, offset, data.demo.vx);
-			offset += sizeof(data.demo.vx);
-			jakopter_com_write_float(nav_channel, offset, data.demo.vy);
-			offset += sizeof(data.demo.vy);
-			jakopter_com_write_float(nav_channel, offset, data.demo.vz);
-			break;
-		default:
-			break;
-	}
+	// Then the main loop for the node
+	while(ros::ok()) {
 
-	pthread_mutex_unlock(&mutex_navdata);
-
-	navdata_timestamp();
-	return ret;
-}
-
-static void navdata_timestamp() {
-	pthread_mutex_lock(&mutex_timestamp);
-	memset(timestamp, '\0', TSTAMP_LEN+1);
-	struct timespec ts = {0,0};
-	clock_gettime(CLOCK_REALTIME, &ts);
-	snprintf(timestamp, TSTAMP_LEN+1, "%lu.%lu:", ts.tv_sec, ts.tv_nsec);
-	pthread_mutex_unlock(&mutex_timestamp);
-}
-
-static int navdata_init()
-{
-	fd_set fds;
-	FD_ZERO(&fds);
-	FD_SET(sock_navdata, &fds);
-	struct timeval timeout;
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
-
-	//FBO
-	//fprintf(stderr, "navdata_init sending packet to %s:%d\n", inet_ntoa(addr_drone_navdata.sin_addr), 
-	//	ntohs(addr_drone_navdata.sin_port));
-	//LBO
-
-	if (sendto(sock_navdata, "\x01", 1, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata)) < 0) {
-		perror("[~][navdata] Can't send ping");
-		return -1;
-	}
-
-	if (select(sock_navdata+1, &fds, NULL, NULL, &timeout) <= 0) {
-		perror("[~][navdata] Ping ack not received");
-		return -1;
-	}
-
-
-	if (recv_cmd() < 0) {
-		perror("[~][navdata] First navdata packet not received");
-		return -1;
-	}
-
-	if (data.raw.ardrone_state & (1 << 11)) {
-		fprintf(stderr, "[*][navdata] bootstrap: %d\n", (data.raw.ardrone_state >> 11) & 1);
-	}
-
-	if (data.raw.ardrone_state & (1 << 15)) {
-		fprintf(stderr, "[*][navdata] Battery charge too low: %d\n", (data.raw.ardrone_state >> 15) & 1);
-		//TODO: Use errcode instead
-		//return -1;
-	}
-
-	if (init_navdata_bootstrap() < 0){
-		fprintf(stderr, "[~][navdata] bootstrap init failed\n");
-		return -1;
-	}
-
-	if (recv_cmd() < 0)
-		perror("[~][navdata] Second navdata packet not received");
-
-	if (data.raw.ardrone_state & (1 << 6)) {
-		fprintf(stderr, "[*][navdata] control command ACK: %d\n", (data.raw.ardrone_state >> 6) & 1);
-	}
-
-	if (config_ack() < 0){
-		fprintf(stderr, "[~][navdata] Init ack failed\n");
-		return -1;
-	}
-
-	if (data.raw.ardrone_state & (1 << 11)) {
-		fprintf(stderr, "[~][navdata] bootstrap end: %d\n", (data.raw.ardrone_state >> 11) & 1);
-	}
-
-	return 0;
-}
-
-void* navdata_routine(void* args)
-{
-	pthread_mutex_lock(&mutex_stopped);
-
-	while (!stopped_navdata) {
-		pthread_mutex_unlock(&mutex_stopped);
-
-		if (recv_cmd() < 0)
-			perror("[~][navdata] Failed to receive navdata");
-		usleep(NAVDATA_INTERVAL*1000);
-
-		if (sendto(sock_navdata, "\x01", 1, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata)) < 0) {
-			perror("[~][navdata] Failed to send ping");
-			pthread_exit(NULL);
+		// Try to send a packet
+		if (sendto(navdata_fd, navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata)) < 0) {
+			ROS_ERROR("Error during sending a navdata packet");
 		}
 
-		pthread_mutex_lock(&mutex_stopped);
+		// Wait the next wake up
+		loop_rate.sleep();
 	}
 
-	pthread_mutex_unlock(&mutex_stopped);
+	// Close the navdata fd at the end
+	if (navdata_fd) close(navdata_fd);
 
-	pthread_exit(NULL);
-}
-
-int navdata_connect(const char* drone_ip)
-{
-	if (!stopped_navdata)
-		return -1;
-
-	addr_drone_navdata.sin_family      = AF_INET;
-	if (drone_ip == NULL)
-		addr_drone_navdata.sin_addr.s_addr = inet_addr(WIFI_ARDRONE_IP);
-	else
-		addr_drone_navdata.sin_addr.s_addr = inet_addr(drone_ip);
-	addr_drone_navdata.sin_port        = htons(PORT_NAVDATA);
-
-	addr_client_navdata.sin_family      = AF_INET;
-	addr_client_navdata.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr_client_navdata.sin_port        = htons(PORT_NAVDATA);
-
-	sock_navdata = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-	if (sock_navdata < 0) {
-		fprintf(stderr, "[~][navdata] Can't establish socket \n");
-		return -1;
-	}
-
-	if (bind(sock_navdata, (struct sockaddr*)&addr_client_navdata, sizeof(addr_client_navdata)) < 0) {
-		fprintf(stderr, "[~][navdata] Can't bind socket to port %d\n", PORT_NAVDATA);
-		return -1;
-	}
-
-	nav_channel = jakopter_com_add_channel(CHANNEL_NAVDATA, sizeof(data));
-
-	if (navdata_init() < 0) {
-		perror("[~][navdata] Init sequence failed");
-		return -1;
-	}
-
-	pthread_mutex_lock(&mutex_stopped);
-	stopped_navdata = false;
-	pthread_mutex_unlock(&mutex_stopped);
-
-	if(pthread_create(&navdata_thread, NULL, navdata_routine, NULL) < 0) {
-		perror("[~][navdata] Can't create thread");
-		return -1;
-	}
-
+	// Return the correct end status
 	return 0;
-}
-
-int navdata_disconnect()
-{
-	int ret;
-	pthread_mutex_lock(&mutex_stopped);
-
-	if (!stopped_navdata) {
-		stopped_navdata = true;
-		pthread_mutex_unlock(&mutex_stopped);
-		ret = pthread_join(navdata_thread, NULL);
-
-		jakopter_com_remove_channel(CHANNEL_NAVDATA);
-
-		close(sock_navdata);
-	}
-	else {
-		pthread_mutex_unlock(&mutex_stopped);
-
-		fprintf(stderr, "[~][navdata] Communication already stopped\n");
-		ret = -1;
-	}
-
-	return ret;
-}
-
-JAKO_EXPORT int jakopter_is_flying()
-{
-	int flyState = -1;
-	pthread_mutex_lock(&mutex_navdata);
-	flyState = data.raw.ardrone_state & 0x0001;
-	pthread_mutex_unlock(&mutex_navdata);
-	return flyState;
-}
-
-JAKO_EXPORT int jakopter_battery()
-{
-	int battery = -1;
-
-	if (data.raw.options[0].tag != TAG_DEMO && data.raw.sequence < 1) {
-		fprintf(stderr, "[~][navdata] Current tag does not match TAG_DEMO.");
-		return battery;
-	}
-
-	pthread_mutex_lock(&mutex_navdata);
-	battery = data.demo.vbat_flying_percentage;
-	pthread_mutex_unlock(&mutex_navdata);
-
-	return battery;
-}
-
-JAKO_EXPORT int jakopter_height()
-{
-	int height = -1;
-
-	if (data.raw.options[0].tag != TAG_DEMO && data.raw.sequence < 1) {
-		fprintf(stderr, "[~][navdata] Current tag does not match TAG_DEMO.");
-		return height;
-	}
-
-	pthread_mutex_lock(&mutex_navdata);
-	height = data.demo.altitude;
-	pthread_mutex_unlock(&mutex_navdata);
-
-	return height;
-}
-
-int navdata_no_sq()
-{
-	int ret;
-	pthread_mutex_lock(&mutex_navdata);
-	ret = data.raw.sequence;
-	pthread_mutex_unlock(&mutex_navdata);
-	return ret;
-}
-
-void debug_navdata_demo()
-{
-	pthread_mutex_lock(&mutex_navdata);
-	printf("Header: %x\n",data.demo.header);
-	printf("Mask: %x\n",data.demo.ardrone_state);
-	printf("Sequence num: %d\n",data.demo.sequence);
-	printf("Tag: %x\n",data.demo.tag);
-	printf("Size: %d\n",data.demo.size);
-	printf("Fly state: %x\n",data.demo.ctrl_state); //Mask defined in SDK ctrl_states.h
-	printf("Theta: %f\n",data.demo.theta); //Pitch
-	printf("Phi: %f\n",data.demo.phi); //Roll
-	printf("Psi: %f\n",data.demo.psi); //Yaw
-	pthread_mutex_unlock(&mutex_navdata);
-}
-
-JAKO_EXPORT const char* jakopter_log_navdata()
-{
-	static char ret[LOG_LEN];
-	if (!stopped_navdata) {
-		memset(ret, 0, LOG_LEN);
-		char buf[DEMO_LEN];
-		pthread_mutex_lock(&mutex_timestamp);
-		strncat(ret, timestamp, TSTAMP_LEN);
-		pthread_mutex_unlock(&mutex_timestamp);
-		pthread_mutex_lock(&mutex_navdata);
-		snprintf(buf, DEMO_LEN, "n %x %x %d %d %.4f %.4f %.4f %.4f %.4f %.4f ",
-			data.demo.ardrone_state,
-			data.demo.ctrl_state,
-			data.demo.vbat_flying_percentage,
-			data.demo.altitude,
-			data.demo.theta,
-			data.demo.phi,
-			data.demo.psi,
-			data.demo.vx,
-			data.demo.vy,
-			data.demo.vz
-			);
-		pthread_mutex_unlock(&mutex_navdata);
-		strncat(ret, buf, DEMO_LEN);
-		return ret;
-	}
-	else
-		return NULL;
 }

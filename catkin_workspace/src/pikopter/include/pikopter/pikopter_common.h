@@ -21,11 +21,9 @@
 #include <netdb.h>
 
 // Ros librairies in order to use them
-//#include "ros_common.h"
-//#include "ros_com_channel.h"
-//#include "ros_com_master.h"
-//#include "pikopter_navdata.h"
-//#include "pikopter_cmd.h"
+#include <ros/ros.h>
+#include <ros/console.h>
+
 
 
 /* ################################### CONSTANTS ################################### */
@@ -37,13 +35,16 @@
 #define SOCKET_ERRNO errno
 
 // DUNO
-#define MSG_NOBLOCK (1 << 0)   
+#define MSG_NOBLOCK (1 << 0)
 
 // DUNO
 #define CHUCK_BUFFER_SIZE 14000
 
 // Maximum packets exchange (hours of flying)
-#define MAXCMDNAVDATA 10000000
+#define MAX_CMD_NAVDATA 10000000
+
+// Max size of an IP adress OR a domain name to get it
+#define MAX_DOMAINE_NAME_SIZE 256
 
 
 
@@ -55,7 +56,7 @@ class PikopterNetwork {
 
 	// Public methods
 	public:
-		int open_udp_socket(int portnum, struct sockaddr_in *serv_addr, char* station_ip);
+		static int open_udp_socket(int portnum, struct sockaddr_in *serv_addr, char *station_ip);
 };
 
 #endif

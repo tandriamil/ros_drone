@@ -13,9 +13,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "../include/pikopter/pikopter_common.h"
 #include "../include/pikopter/pikopter_cmd.h"
-#include "../include/pikopter/pikopter_navdata.h"
 
 using namespace std;
 
@@ -123,7 +121,7 @@ void parseCommand(char *buf) {
 unsigned char commandBuffer[PACKET_SIZE+1];
 
 int openCmdTcpChannel() {
-	int i = MAXCMDNAVDATA;
+	int i = MAX_CMD_NAVDATA;
 	socklen_t len = sizeof(addr_drone);
 	struct timeval tv;
 	

@@ -15,6 +15,9 @@
 // Interval in seconds
 #define NAVDATA_INTERVAL 1/15
 
+// Loop rate in hertz
+#define NAVDATA_LOOP_RATE 33  // Basically, every 30*1000 microseconds, so 33 times per seconds
+
 // A tag to say if it's a demo or not
 #define TAG_DEMO 0
 
@@ -162,31 +165,21 @@ union navdata_t {
 };
 
 
-
 /* ################################### Classes ################################### */
 /*!
- * \brief Jakopter navdatas ros node
+ * \brief Pikopter navdata ros node
  */
-class JakopterNavdatas {
+class PikopterNavdata {
 
-	// Public methods
+	// Public part
 	public:
+		int main_loop(int argc, char **argv);
 
-	// Private methods
+	// Private part
 	private:
+		struct sockaddr_in addr_drone_navdata;
+		unsigned char navdata_buffer[PACKET_SIZE];
+		int navdata_fd;
 };
-
-
-/* Ancient methods
-int navdata_connect(const char* drone_ip);
-int navdata_disconnect();
-int jakopter_is_flying();
-int jakopter_battery();
-int jakopter_height();
-int navdata_no_sq();
-void debug_navdata_demo();
-const char* jakopter_navdata_timestamp();
-const char* jakopter_log_navdata();
-*/
 
 #endif
