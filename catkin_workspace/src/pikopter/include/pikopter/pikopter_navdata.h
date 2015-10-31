@@ -165,18 +165,15 @@ union navdata_t {
 };
 
 
+
 /* ################################### Classes ################################### */
 /*!
  * \brief Pikopter navdata ros node
  */
 class PikopterNavdata {
 
-	// Public part
-	public:
-		int main_loop(int argc, char **argv);
-
 	// Private part
-	private:
+	public:
 		struct sockaddr_in addr_drone_navdata;
 		unsigned char navdata_buffer[PACKET_SIZE];
 		int navdata_fd;

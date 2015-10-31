@@ -120,7 +120,6 @@ include_directories(
 ## Declare a C++ library
 add_library(pikopter_network src/pikopter_network.cpp)
 
-
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

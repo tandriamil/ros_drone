@@ -10,19 +10,8 @@
  */
 int main(int argc, char **argv) {
 
-	// Just return the main loop of PikopterNavdata
+	// We will use a PikopterNavdata object here
 	PikopterNavdata pn;
-	return pn.main_loop(argc, argv);
-}
-
-
-/*!
- * \brief Main loop for the navdata node
- *
- * \param argc The number of arguments
- * \param argv The arguments
- */
-int PikopterNavdata::main_loop(int argc, char **argv) {
 
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_navdata");
@@ -43,25 +32,27 @@ int PikopterNavdata::main_loop(int argc, char **argv) {
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_INTERVAL);
 
 	// Open the UDP port for the navadata node
-	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, argv[1]);
+	pn.navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &pn.addr_drone_navdata, argv[1]);
 
 	// Get the length of the socket
-	socklen_t len = sizeof(addr_drone_navdata);
+	socklen_t len = sizeof(pn.addr_drone_navdata);
 
 	// Then the main loop for the node
 	while(ros::ok()) {
 
-		// Try to send a packet
-		if (sendto(navdata_fd, navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata)) < 0) {
+		// Here we receive the navdatas from pikopter_mavlink
+
+		// Here we send it to jakopter
+		if (sendto(pn.navdata_fd, pn.navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn.addr_drone_navdata, sizeof(pn.addr_drone_navdata)) < 0) {
 			ROS_ERROR("Error during sending a navdata packet");
 		}
 
 		// Wait the next wake up
-		loop_rate.sleep();
+		loop_rate.sleep();  // Normally, we just wait to receive a packet from pikopter_mavlink
 	}
 
 	// Close the navdata fd at the end
-	if (navdata_fd) close(navdata_fd);
+	if (pn.navdata_fd) close(pn.navdata_fd);
 
 	// Return the correct end status
 	return 0;
