@@ -14,6 +14,7 @@
 #include <netdb.h>
 
 #include "../include/pikopter/pikopter_cmd.h"
+#include "../include/pikopter/pikopter_navdata.h"
 
 using namespace std;
 
@@ -172,6 +173,7 @@ int openCmdTcpChannel() {
 
 int main(int argc, char *argv[]) {
 	PikopterNetwork pik;
+
 	fd_set readfs;
 	int ret;
 
@@ -179,6 +181,9 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "No IP addres\n use: %s \"ip_address\"\n", argv[0]);
 		return -1;
 	}
+
+	// Initialize ros for this node
+	ros::init(argc, argv, "pikopter_cmd");
 
 	STATION_IP = argv[1];    
 	fprintf(stderr, "starting pikopter server (%s)...\n", STATION_IP);
