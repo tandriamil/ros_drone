@@ -26,10 +26,10 @@ int main(int argc, char **argv) {
 	}
 
 	// Put the rate for this node
-	ros::Rate loop_rate(NAVDATA_INTERVAL);
+	ros::Rate loop_rate(NAVDATA_LOOP_RATE);
 
 	// Debug message
-	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_INTERVAL);
+	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
 	// Open the UDP port for the navadata node
 	pn.navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &pn.addr_drone_navdata, argv[1]);
