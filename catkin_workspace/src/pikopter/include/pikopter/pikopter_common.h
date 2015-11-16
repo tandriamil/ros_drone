@@ -19,6 +19,8 @@
 #include <sys/uio.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sstream>
+#include "std_msgs/String.h"
 
 // Ros librairies in order to use them
 #include "ros/ros.h"

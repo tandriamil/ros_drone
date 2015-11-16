@@ -32,23 +32,23 @@ static char emergency_arg[] = "290717952";
 //NAV DATA HANDLING
 unsigned char navdataBuffer[PACKET_SIZE];
 
-void fillNavDataBuffer(int alt) {
-	static union navdata_t data;
-	memset((char *) navdataBuffer,0,PACKET_SIZE);
-	data.demo.tag = TAG_DEMO;
-	data.demo.vbat_flying_percentage = 100;
-	data.demo.altitude = alt;
-	data.demo.theta = 0;
-	data.demo.phi = 0;
-	data.demo.psi =0;
-	data.demo.vx=0;
-	data.demo.vy=0;
-	data.demo.vz=0;
-	memcpy((char *) navdataBuffer, &data,PACKET_SIZE);
-}
+// void fillNavDataBuffer(int alt) {
+// 	static union navdata_t data;
+// 	memset((char *) navdataBuffer,0,PACKET_SIZE);
+// 	data.demo.tag = TAG_DEMO;
+// 	data.demo.vbat_flying_percentage = 100;
+// 	data.demo.altitude = alt;
+// 	data.demo.theta = 0;
+// 	data.demo.phi = 0;
+// 	data.demo.psi =0;
+// 	data.demo.vx=0;
+// 	data.demo.vy=0;
+// 	data.demo.vz=0;
+// 	memcpy((char *) navdataBuffer, &data,PACKET_SIZE);
+// }
 
 //Parsing command buffer
-void parseCommand(char *buf) {
+std::string parseCommand(char *buf) {
 	char cmd[PACKET_SIZE];
 	int seq, tcmd, p1, p2, p3, p4, p5;
 	static int pseq, ptcmd = 0, pp1 = 0, pp2 = 0, pp3 = 0, pp4 = 0, pp5 = 0;
@@ -56,37 +56,37 @@ void parseCommand(char *buf) {
 	//AT*FTRIM=7
 	//AT*REF=78,290718208
 
-	if (!buf) return;
+	if (!buf) return NULL;
 
 	// use sscan to parse the command
 	if(sscanf(buf, "AT*FTRIM=%d", &seq) == 1) {
 		tcmd = -1;
 		if(tcmd != ptcmd)
-			fprintf(stderr,"Found FTRIM\n");
-		fillNavDataBuffer(0);
+			return "AT*FTRIM";
+		//fillNavDataBuffer(0);
 	}
 
 	else if(sscanf(buf, "AT*REF=%d, %d", &seq, &tcmd) == 2) {
 		switch(tcmd) {
 		case 290718208:
 			if(tcmd != ptcmd)
-				fprintf(stderr, "received DECOLLAGE %d\n", ptcmd);
-			fillNavDataBuffer(700);
+				return "DECOLLAGE";
+			//fillNavDataBuffer(700);
 			break;
 
 		case 290717696:
 			if(tcmd != ptcmd)
-				fprintf(stderr, "received ATTERRISSAGE\n");
-			fillNavDataBuffer(0);
+				return "ATTERRISSAGE";
+			//fillNavDataBuffer(0);
 			break;
 
 		case 290717952:
 			if(tcmd != ptcmd)
-				fprintf(stderr, "received EMERGENCY\n");
+				return "EMERGENCY";
 			break;
 
 		default:
-			fprintf(stderr, "Found ????\n");
+			return "UNKNOWN";
 		}
 	}
 
@@ -94,28 +94,32 @@ void parseCommand(char *buf) {
 		if((p1 != pp1) || (p2 != pp2) || (p3 != pp3) || (p4 != pp4) || (p5 != pp5)) {
 			if(p1 || p2 || p3 || p4 || p5) {
 				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5)
-					fprintf(stderr, "received FORWARD\n");
+					return "FORWARD";
 				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5)
-					fprintf(stderr, "received BACKWARD\n");
+					return "BACKWARD";
 				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5)
-					fprintf(stderr, "received DOWN\n");
+					return "DOWN";
 				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5)
-					fprintf(stderr, "received UP\n");
+					return "UP";
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0))
-					fprintf(stderr, "received LEFT\n");
+					return "LEFT";
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0))
-					fprintf(stderr, "received RIGHT\n");
-				else 
-					fprintf(stderr, "received PCMD: %d, %d, %d, %d, %d, %d\n", seq, p1, p2, p3, p4, p5);
+					return "RIGHT";
+				else {
+					std::stringstream ss;
+					ss << "PCMD " << seq << " " << p1 << " " << p2 << " " << p3 << " " << p4 << " " << p5 ;
+					std::string s = ss.str();
+					return s;
+				}
 			}
 
 			else {
-				fprintf(stderr, "received STAY\n");
+				return "STAY";
 			}
 		}
-		pp1 = p1; pp2 = p2; pp3 = p3; pp4 = p4; pp5 = p5;
 	}
-	ptcmd = tcmd;
+
+	return NULL;
 }
 
 //////////////////// Parrot channels
@@ -123,7 +127,6 @@ unsigned char commandBuffer[PACKET_SIZE+1];
 
 int openCmdTcpChannel() {
 	int i = MAX_CMD_NAVDATA;
-	socklen_t len = sizeof(addr_drone);
 	struct timeval tv;
 	
 	// set a timeout
@@ -139,8 +142,36 @@ int openCmdTcpChannel() {
 		perror("sendto()");
 	}
 
-	while(i) {
-		i--;
+	return comfd;
+}
+
+int main(int argc, char *argv[]) {
+	PikopterNetwork pik;
+
+	fd_set readfs;
+	int ret, i = 0;
+	socklen_t len = sizeof(addr_drone);
+
+	if(argc < 2) {
+		fprintf(stderr, "No IP addres\n use: %s \"ip_address\"\n", argv[0]);
+		return -1;
+	}
+
+	// Initialize ros for this node
+	ros::init(argc, argv, "pikopter_cmd");
+
+	ros::NodeHandle nodeHandle;
+	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("pikopter_mavlink", 1000);
+	ros::Rate loop_rate(10);
+	// CA MARCHE PAS -> Erreur affichée :
+	// référence indéfinie vers « PikopterNetwork::open_udp_socket(int, sockaddr_in*, char*) »
+	
+	//pik.open_udp_socket(PORT_CMD, &addr_drone, STATION_IP);
+	comfd = openCmdTcpChannel();
+	STATION_IP = argv[1];    
+	fprintf(stderr, "starting pikopter server (%s)...\n", STATION_IP);
+
+	while(ros::ok()) {
 		memset(commandBuffer, 0, PACKET_SIZE);
 		// fprintf(stderr, "Waiting packet from %s:%d\n", inet_ntoa(addr_drone.sin_addr), ntohs(addr_drone.sin_port));
 		// need to add a watchdog here
@@ -148,7 +179,11 @@ int openCmdTcpChannel() {
 		
 		if(ret > 0) {
 			// fprintf(stderr,"cmd %d       received: %s (%d)\n",i,commandBuffer,ret);
-			parseCommand((char *) commandBuffer);
+			std::string command = parseCommand((char *) commandBuffer);
+			std::stringstream ssLog;
+			ssLog << "RECEIVED COMMAND: [" << command << "]";
+			std::string sLog = ssLog.str();
+			ROS_INFO("%s", sLog.c_str());
 		}
 
 		else {
@@ -159,40 +194,13 @@ int openCmdTcpChannel() {
 			
 			// perror("recvfrom()");
 			// We should send ping again... for server
-			sendto(comfd, "\0", 1, 0, (struct sockaddr*) &addr_drone, sizeof(addr_drone));
-			usleep(100*1000); // wait 0.1 second before going to next step
+			//cmd_pub.publish(msg);
+			//sendto(comfd, "\0", 1, 0, (struct sockaddr*) &addr_drone, sizeof(addr_drone));
 		}
 
-		usleep(30*1000);
+		loop_rate.sleep();	
 	}
 
-	if(comfd) close(comfd);
-	
-	return 0;
-}
-
-int main(int argc, char *argv[]) {
-	PikopterNetwork pik;
-
-	fd_set readfs;
-	int ret;
-
-	if(argc < 2) {
-		fprintf(stderr, "No IP addres\n use: %s \"ip_address\"\n", argv[0]);
-		return -1;
-	}
-
-	// Initialize ros for this node
-	ros::init(argc, argv, "pikopter_cmd");
-
-	STATION_IP = argv[1];    
-	fprintf(stderr, "starting pikopter server (%s)...\n", STATION_IP);
-
-	// CA MARCHE PAS -> Erreur affichée :
-	// référence indéfinie vers « PikopterNetwork::open_udp_socket(int, sockaddr_in*, char*) »
-	comfd = pik.open_udp_socket(PORT_CMD, &addr_drone, STATION_IP);
-
-	openCmdTcpChannel();
-
+	close(comfd);
 	return 0;
 }
