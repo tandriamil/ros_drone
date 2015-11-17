@@ -125,28 +125,12 @@ std::string parseCommand(char *buf) {
 //////////////////// Parrot channels
 unsigned char commandBuffer[PACKET_SIZE+1];
 
-int openCmdTcpChannel() {
-	int i = MAX_CMD_NAVDATA;
-	struct timeval tv;
-	
-	// set a timeout
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000; // 100ms
-	
-	if(setsockopt(comfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-		perror("Error timeout");
-	}
-
-	// send a ping
-	if(sendto(comfd, "\0", 1, 0, (struct sockaddr*) &addr_drone, sizeof(addr_drone)) < 0) {
-		perror("sendto()");
-	}
-
-	return comfd;
-}
-
 int main(int argc, char *argv[]) {
-	PikopterNetwork pik;
+	PikopterCmd pik;
+
+	pik.addr_drone_cmd.sin_family = AF_INET;
+	pik.addr_drone_cmd.sin_port = htons(5556);
+	inet_aton("127.0.0.1", (struct in_addr*) &pik.addr_drone_cmd.sin_addr.s_addr);
 
 	fd_set readfs;
 	int ret, i = 0;
@@ -166,12 +150,12 @@ int main(int argc, char *argv[]) {
 	// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
 	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("pikopter_mavlink", 1000);
 	ros::Rate loop_rate(10);
-	
-	//pik.open_udp_socket(PORT_CMD, &addr_drone, STATION_IP);
 
-	comfd = openCmdTcpChannel();
-	STATION_IP = argv[1];    
-	fprintf(stderr, "starting pikopter server (%s)...\n", STATION_IP);
+	// Open the UDP port for the navadata node
+	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &pik.addr_drone_cmd, argv[1]);
+	//bind(comfd, (struct sockaddr*) &pik.addr_drone_cmd, sizeof(pik.addr_drone_cmd));
+
+	STATION_IP = argv[1];
 
 	while(ros::ok()) {
 		memset(commandBuffer, 0, PACKET_SIZE);
@@ -179,7 +163,7 @@ int main(int argc, char *argv[]) {
 		// fprintf(stderr, "Waiting packet from %s:%d\n", inet_ntoa(addr_drone.sin_addr), ntohs(addr_drone.sin_port));
 		
 		// need to add a watchdog here
-		int ret = recvfrom(comfd, commandBuffer, PACKET_SIZE, 0, (struct sockaddr*) &addr_drone, &len);
+		int ret = recvfrom(comfd, commandBuffer, PACKET_SIZE, 0, (struct sockaddr*) STATION_IP, (socklen_t*) sizeof(STATION_IP));
 		
 		if(ret > 0) {
 			// fprintf(stderr,"cmd %d       received: %s (%d)\n",i,commandBuffer,ret);

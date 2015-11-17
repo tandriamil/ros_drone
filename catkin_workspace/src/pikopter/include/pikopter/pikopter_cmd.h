@@ -25,11 +25,11 @@
  */
 class PikopterCmd {
 
-	// Public methods
+	// Private part
 	public:
-
-	// Private methods
-	private:
+		struct sockaddr_in addr_drone_cmd;
+		unsigned char cmd_buffer[PACKET_SIZE];
+		int cmd_fd;
 };
 
 #endif
