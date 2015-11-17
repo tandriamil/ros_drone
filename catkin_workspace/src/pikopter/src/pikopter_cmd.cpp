@@ -153,44 +153,57 @@ int main(int argc, char *argv[]) {
 	socklen_t len = sizeof(addr_drone);
 
 	if(argc < 2) {
-		fprintf(stderr, "No IP addres\n use: %s \"ip_address\"\n", argv[0]);
+		ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
 		return -1;
 	}
 
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_cmd");
 
+	// Create a NodeHandle
 	ros::NodeHandle nodeHandle;
+	
+	// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
 	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("pikopter_mavlink", 1000);
 	ros::Rate loop_rate(10);
-	// CA MARCHE PAS -> Erreur affichée :
-	// référence indéfinie vers « PikopterNetwork::open_udp_socket(int, sockaddr_in*, char*) »
 	
 	//pik.open_udp_socket(PORT_CMD, &addr_drone, STATION_IP);
+
 	comfd = openCmdTcpChannel();
 	STATION_IP = argv[1];    
 	fprintf(stderr, "starting pikopter server (%s)...\n", STATION_IP);
 
 	while(ros::ok()) {
 		memset(commandBuffer, 0, PACKET_SIZE);
+		
 		// fprintf(stderr, "Waiting packet from %s:%d\n", inet_ntoa(addr_drone.sin_addr), ntohs(addr_drone.sin_port));
+		
 		// need to add a watchdog here
 		int ret = recvfrom(comfd, commandBuffer, PACKET_SIZE, 0, (struct sockaddr*) &addr_drone, &len);
 		
 		if(ret > 0) {
 			// fprintf(stderr,"cmd %d       received: %s (%d)\n",i,commandBuffer,ret);
+			
+			// Get command
 			std::string command = parseCommand((char *) commandBuffer);
+			
+			// Building message log
 			std::stringstream ssLog;
 			ssLog << "RECEIVED COMMAND: [" << command << "]";
 			std::string sLog = ssLog.str();
 			ROS_INFO("%s", sLog.c_str());
+			
+			// Building String message to publish to the topic pikopter_mavlink
+			std_msgs::String msg;
+			msg.data = sLog;
+			cmd_pub.publish(msg);
 		}
 
 		else {
 			if(errno == 11)
-				fprintf(stderr, "Receiving command time out \n");
+				ROS_ERROR("%s", "Receiving command time out \n");
 			else
-				fprintf(stderr, "Receiving command, %d, failed (%d)\n", i, errno);
+				ROS_ERROR("Receiving command, %d, failed (errno: %d)\n", i, errno);
 			
 			// perror("recvfrom()");
 			// We should send ping again... for server
