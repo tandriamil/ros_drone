@@ -9,23 +9,16 @@
 
 
 /* ################################### CONSTANTS ################################### */
-// The port used for the navdatas
+// The port used for the commands
 #define PORT_CMD 5556
-
-// Basic commands
-#define CMD_TAKEOFF_ARG "290718208"
-#define CMD_LAND_ARG "290717696"
-#define CMD_EMERGENCY_ARG "290717952"
-
-
 
 /* ################################### Classes ################################### */
 /*!
- * \brief Jakopter navdatas ros node
+ * \brief Jakopter commands ros node
  */
 class PikopterCmd {
 
-	// Private part
+	// Public part
 	public:
 		struct sockaddr_in addr_drone_cmd;
 		unsigned char cmd_buffer[PACKET_SIZE];

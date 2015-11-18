@@ -1,3 +1,4 @@
+/* Import System */
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -13,41 +14,24 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+/* Import Headers */
 #include "../include/pikopter/pikopter_cmd.h"
 #include "../include/pikopter/pikopter_navdata.h"
 
-using namespace std;
-
+/* Declarations */
 char *STATION_IP = NULL;
-
 static struct sockaddr_in addr_drone, addr_client;
-
 int comfd = 0; // in read mode -- receive command
 
-//command string
-static char takeoff_arg[] = "290718208";
-static char land_arg[] = "290717696";
-static char emergency_arg[] = "290717952";
+/* Functions */
 
-//NAV DATA HANDLING
-unsigned char navdataBuffer[PACKET_SIZE];
-
-// void fillNavDataBuffer(int alt) {
-// 	static union navdata_t data;
-// 	memset((char *) navdataBuffer,0,PACKET_SIZE);
-// 	data.demo.tag = TAG_DEMO;
-// 	data.demo.vbat_flying_percentage = 100;
-// 	data.demo.altitude = alt;
-// 	data.demo.theta = 0;
-// 	data.demo.phi = 0;
-// 	data.demo.psi =0;
-// 	data.demo.vx=0;
-// 	data.demo.vy=0;
-// 	data.demo.vz=0;
-// 	memcpy((char *) navdataBuffer, &data,PACKET_SIZE);
-// }
-
-//Parsing command buffer
+/*!
+ * \brief Parsing command
+ *
+ * \param buf the buffer containing the command
+ *
+ * \return the command
+ */
 std::string parseCommand(char *buf) {
 	char cmd[PACKET_SIZE];
 	int seq, tcmd, p1, p2, p3, p4, p5;
@@ -63,7 +47,6 @@ std::string parseCommand(char *buf) {
 		tcmd = -1;
 		if(tcmd != ptcmd)
 			return "AT*FTRIM";
-		//fillNavDataBuffer(0);
 	}
 
 	else if(sscanf(buf, "AT*REF=%d, %d", &seq, &tcmd) == 2) {
@@ -71,19 +54,15 @@ std::string parseCommand(char *buf) {
 		case 290718208:
 			if(tcmd != ptcmd)
 				return "DECOLLAGE";
-			//fillNavDataBuffer(700);
-			break;
 
 		case 290717696:
 			if(tcmd != ptcmd)
 				return "ATTERRISSAGE";
-			//fillNavDataBuffer(0);
 			break;
 
 		case 290717952:
 			if(tcmd != ptcmd)
 				return "EMERGENCY";
-			break;
 
 		default:
 			return "UNKNOWN";
@@ -125,16 +104,36 @@ std::string parseCommand(char *buf) {
 //////////////////// Parrot channels
 unsigned char commandBuffer[PACKET_SIZE+1];
 
+/*!
+ * \brief Launcher of Ros node cmd
+ *
+ * \param argc Number of parameters
+ * \param argv The arguments
+ *
+ */
 int main(int argc, char *argv[]) {
+	// Instance of PikopterCmd class
 	PikopterCmd pik;
 
-	pik.addr_drone_cmd.sin_family = AF_INET;
-	pik.addr_drone_cmd.sin_port = htons(5556);
-	inet_aton("127.0.0.1", (struct in_addr*) &pik.addr_drone_cmd.sin_addr.s_addr);
-
-	fd_set readfs;
-	int ret, i = 0;
+	int i = MAXCMDNAVDATA;
 	socklen_t len = sizeof(addr_drone);
+	
+	// Struct for handling timeout
+	struct timeval tv;
+	
+	// set a timeout
+	tv.tv_sec = 0;
+  	tv.tv_usec = 100000; // 100ms
+
+  	if (setsockopt(comfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+  		ROS_ERROR("%s", "Error timeout");
+  	}
+
+  	// send a ping DO NOT ERASE PLEASE
+  	// Allows to keep connection on
+  	if (sendto(comfd,"\0",1, 0, (struct sockaddr*)&addr_drone, sizeof(addr_drone)) < 0) {
+  		ROS_ERROR("%s", "sendto()");
+  	}
 
 	if(argc < 2) {
 		ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
@@ -149,15 +148,20 @@ int main(int argc, char *argv[]) {
 	
 	// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
 	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("pikopter_mavlink", 1000);
+	
+	// Frequency of how fast we loop
 	ros::Rate loop_rate(10);
 
-	// Open the UDP port for the navadata node
+	// Open the UDP port for the cmd node
 	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &pik.addr_drone_cmd, argv[1]);
-	//bind(comfd, (struct sockaddr*) &pik.addr_drone_cmd, sizeof(pik.addr_drone_cmd));
 
+	// The first argument is the IP address of the Raspberry PI
 	STATION_IP = argv[1];
 
+	// ROS LOOP
 	while(ros::ok()) {
+
+		// Erase buffer commandBuffer
 		memset(commandBuffer, 0, PACKET_SIZE);
 		
 		// fprintf(stderr, "Waiting packet from %s:%d\n", inet_ntoa(addr_drone.sin_addr), ntohs(addr_drone.sin_port));
@@ -165,9 +169,8 @@ int main(int argc, char *argv[]) {
 		// need to add a watchdog here
 		int ret = recvfrom(comfd, commandBuffer, PACKET_SIZE, 0, (struct sockaddr*) STATION_IP, (socklen_t*) sizeof(STATION_IP));
 		
-		if(ret > 0) {
-			// fprintf(stderr,"cmd %d       received: %s (%d)\n",i,commandBuffer,ret);
-			
+		// if we receive something...
+		if(ret > 0) {			
 			// Get command
 			std::string command = parseCommand((char *) commandBuffer);
 			
@@ -183,21 +186,25 @@ int main(int argc, char *argv[]) {
 			cmd_pub.publish(msg);
 		}
 
+		// if nothing is received
 		else {
+			// if time is out
 			if(errno == 11)
 				ROS_ERROR("%s", "Receiving command time out \n");
+			
+			// if other errors occured
 			else
 				ROS_ERROR("Receiving command, %d, failed (errno: %d)\n", i, errno);
-			
-			// perror("recvfrom()");
+
 			// We should send ping again... for server
-			//cmd_pub.publish(msg);
-			//sendto(comfd, "\0", 1, 0, (struct sockaddr*) &addr_drone, sizeof(addr_drone));
+			sendto(comfd, "\0", 1, 0, (struct sockaddr*) &addr_drone, sizeof(addr_drone));
 		}
 
-		loop_rate.sleep();	
+		// Pause in loop with the given value defined in ros::rate
+		loop_rate.sleep();
 	}
 
+	// close UDP socket
 	close(comfd);
 	return 0;
 }
