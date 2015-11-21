@@ -4,7 +4,7 @@
 
 /* ################################### INCLUDES ################################### */
 // Pikotper common includes
-#include "pikopter_common.h"
+#include "pikopter_navdata.h"
 
 
 

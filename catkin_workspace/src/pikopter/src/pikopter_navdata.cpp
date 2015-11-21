@@ -1,6 +1,11 @@
 // Include pikopter navdata headers
 #include "../include/pikopter/pikopter_navdata.h"
 
+/***Mettre le sendto() dans la fonction chatterCallback **/
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO("GOT MESSAGE FROM MAVLINK: [%s]", msg->data.c_str());
+}
 
 /*!
  * \brief Main function
@@ -18,6 +23,7 @@ int main(int argc, char **argv) {
 
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle navdata_node_handle;
+	ros::NodeHandle n;
 
 	// Check the command syntax
 	if (argc != 2) {
@@ -38,21 +44,29 @@ int main(int argc, char **argv) {
 	socklen_t len = sizeof(pn.addr_drone_navdata);
 
 	// Then the main loop for the node
-	while(ros::ok()) {
+//	while(ros::ok()) {
 
 		// Here we receive the navdatas from pikopter_mavlink
+		 ros::Subscriber sub = n.subscribe("mavlink", 1000, chatterCallback);
 
 		// Here we send it to jakopter
-		if (sendto(pn.navdata_fd, pn.navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn.addr_drone_navdata, sizeof(pn.addr_drone_navdata)) < 0) {
+/*		if (sendto(pn.navdata_fd, pn.navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn.addr_drone_navdata, sizeof(pn.addr_drone_navdata)) < 0) {
 			ROS_ERROR("Error during sending a navdata packet");
 		}
-
+*/
 		// Wait the next wake up
-		loop_rate.sleep();  // Normally, we just wait to receive a packet from pikopter_mavlink
-	}
+//		loop_rate.sleep();  // Normally, we just wait to receive a packet from pikopter_mavlink
+//	}
 
 	// Close the navdata fd at the end
-	if (pn.navdata_fd) close(pn.navdata_fd);
+//	if (pn.navdata_fd) close(pn.navdata_fd);
+
+	/**
+   * ros::spin() will enter a loop, pumping callbacks.  With this version, all
+   * callbacks will be called from within this thread (the main one).  ros::spin()
+   * will exit when Ctrl-C is pressed, or the node is shutdown by the master.
+   */
+  	ros::spin();
 
 	// Return the correct end status
 	return 0;

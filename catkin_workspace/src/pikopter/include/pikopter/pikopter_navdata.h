@@ -158,7 +158,7 @@ struct navdata_demo {
 	float32_t  drone_camera_trans[3];
 };
 
-// The navdata structure, contains the basic struc and the demo one
+// The navdata structure, contains the basic struct and the demo one
 union navdata_t {
 	struct navdata raw;
 	struct navdata_demo demo;
@@ -172,7 +172,7 @@ union navdata_t {
  */
 class PikopterNavdata {
 
-	// Private part
+	// Public part
 	public:
 		struct sockaddr_in addr_drone_navdata;
 		unsigned char navdata_buffer[PACKET_SIZE];

@@ -2,6 +2,9 @@
 #include "../include/pikopter/pikopter_mavlink.h"
 #include "../include/pikopter/pikopter_common.h"
 
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include <sstream>
 /*!
  * \brief Callback function called when a new message arrive on pikopter_cmd topic
  *
@@ -26,18 +29,20 @@ int main(int argc, char **argv) {
 	
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_mavlink");
-	
+
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle nodeHandle;
 	
 	// Create a subcriber which listen on pikopter_cmd topic
-	ros::Subscriber mavlink_sub = nodeHandle.subscribe<std_msgs::String>("pikopter_cmd", 1000, handleMessageFromCmd);
+		//ros::Subscriber mavlink_sub = nodeHandle.subscribe<std_msgs::String>("pikopter_cmd", 1000, handleMessageFromCmd);
 
 	// Loop which calling message callbacks as fast as possible
-	ros::spin();
-	
+//	ros::spin();
+	ros::Publisher mavlink_pub = nodeHandle.advertise<std_msgs::String>("mavlink", 1000) ;
 	// Create a publisher and advertise any nodes listening on pikopter_navdata topic that we are going to publish
-	ros::Publisher mavlink_pub = nodeHandle.advertise<std_msgs::String>("pikopter_navdata", 1000);
+		//ros::Publisher mavlink_pub = nodeHandle.advertise<std_msgs::String>("pikopter_subscriber", 1000);
+	//ros::Publisher mavlink_pub = nodeHandle.advertise<std_msgs::String>("mavlink", 1000);
+
 
 	// Define how fast the program which loop
 	ros::Rate loop_rate(10);

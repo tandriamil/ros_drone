@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 	// Instance of PikopterCmd class
 	PikopterCmd pik;
 
-	int i = MAXCMDNAVDATA;
+	int i = MAX_CMD_NAVDATA;
 	socklen_t len = sizeof(addr_drone);
 	
 	// Struct for handling timeout
