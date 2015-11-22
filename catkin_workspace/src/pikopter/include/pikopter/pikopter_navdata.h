@@ -174,9 +174,16 @@ class PikopterNavdata {
 
 	// Public part
 	public:
+
+		// Attributes
 		struct sockaddr_in addr_drone_navdata;
 		unsigned char navdata_buffer[PACKET_SIZE];
 		int navdata_fd;
+
+		// Functions
+		PikopterNavdata(char *ip_adress);  // Constructor
+		~PikopterNavdata();  // Destructor
+		void chatterCallback(const std_msgs::String::ConstPtr& msg);
 };
 
 #endif
