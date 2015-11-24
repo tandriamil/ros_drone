@@ -2,6 +2,36 @@
 #include "../include/pikopter/pikopter_navdata.h"
 #include "sensor_msgs/NavSatFix.h"
 
+
+/*!
+ * \brief Constructor of PikopterNavdata
+ *
+ * \param The ip adress on which we create the udp socket
+ */
+PikopterNavdata::PikopterNavdata(char *ip_adress) {
+
+	// Open the UDP port for the navadata node
+	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, ip_adress);
+
+	// The other attributes got their memory allocated automatically
+}
+
+
+/*!
+ * \brief Destructor of PikopterNavdata
+ */
+PikopterNavdata::~PikopterNavdata() {
+
+	// Close the UDP socket
+	close(navdata_fd);
+
+	// The other attributes got their memory deallocated automatically
+}
+
+
+/*!
+ * \brief Function called when a message is published on X node
+ */
 /***Mettre le sendto() dans la fonction chatterCallback **/
 void chatterCallback(const sensor_msgs::NavSatFix::ConstPtr& msg)
 {
@@ -13,6 +43,7 @@ void chatterCallback(const sensor_msgs::NavSatFix::ConstPtr& msg)
 
 	//Traitement des donnée recue 
 }
+
 
 /*!
  * \brief Main function
@@ -46,10 +77,10 @@ int main(int argc, char **argv) {
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
 	// Open the UDP port for the navadata node
-	pn.navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &pn.addr_drone_navdata, argv[1]);
+	pn->navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &pn->addr_drone_navdata, argv[1]);
 
 	// Get the length of the socket
-	socklen_t len = sizeof(pn.addr_drone_navdata);
+	socklen_t len = sizeof(pn->addr_drone_navdata);
 
 	// Then the main loop for the node
 //	while(ros::ok()) {
@@ -59,7 +90,7 @@ int main(int argc, char **argv) {
 		ros::Subscriber sub = navdata_node_handle.subscribe("/mavros/global_position/global", 1, chatterCallback);
 
 		// Here we send it to jakopter
-/*		if (sendto(pn.navdata_fd, pn.navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn.addr_drone_navdata, sizeof(pn.addr_drone_navdata)) < 0) {
+/*		if (sendto(pn->navdata_fd, pn->navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn->addr_drone_navdata, sizeof(pn->addr_drone_navdata)) < 0) {
 			ROS_ERROR("Error during sending a navdata packet");
 		}
 */
@@ -68,7 +99,7 @@ int main(int argc, char **argv) {
 //	}
 
 	// Close the navdata fd at the end
-//	if (pn.navdata_fd) close(pn.navdata_fd);
+//	if (pn->navdata_fd) close(pn->navdata_fd);
 
 	/**
 	 * ros::spin() will enter a loop, pumping callbacks.  With this version, all
