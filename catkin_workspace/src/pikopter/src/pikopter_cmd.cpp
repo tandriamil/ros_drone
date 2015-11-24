@@ -14,9 +14,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+
 /* Import Headers */
 #include "../include/pikopter/pikopter_cmd.h"
-#include "../include/pikopter/pikopter_navdata.h"
+
 
 /* Declarations */
 char *STATION_IP = NULL;

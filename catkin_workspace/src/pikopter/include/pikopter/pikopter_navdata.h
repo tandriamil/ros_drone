@@ -6,14 +6,14 @@
 // Pikotper common includes
 #include "pikopter_common.h"
 
+// Mavros structures includes
+#include "sensor_msgs/NavSatFix.h"
+
 
 
 /* ################################### CONSTANTS ################################### */
 // The port used for the navdatas
 #define PORT_NAVDATA 5554
-
-// Interval in seconds
-#define NAVDATA_INTERVAL 1/15
 
 // Loop rate in hertz
 #define NAVDATA_LOOP_RATE 33  // Basically, every 30*1000 microseconds, so 33 times per seconds
@@ -183,7 +183,6 @@ class PikopterNavdata {
 		// Functions
 		PikopterNavdata(char *ip_adress);  // Constructor
 		~PikopterNavdata();  // Destructor
-		void chatterCallback(const std_msgs::String::ConstPtr& msg);
 };
 
 #endif
