@@ -4,3 +4,5 @@ src/CMakeLists.txt
 src/mavros
 src/.rosinstall.bak
 .*~
+CMakeCache.txt
+CMakeFiles

@@ -11,3 +11,5 @@ devel/setup.sh
 devel/share/ros/cmake/rosConfig.cmake
 devel/.rosinstall
 devel/lib/ros/cmd
+CMakeCache.txt
+CMakeFiles
