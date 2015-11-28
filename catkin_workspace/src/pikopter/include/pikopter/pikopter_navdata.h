@@ -7,7 +7,7 @@
 #include "pikopter_common.h"
 
 // Mavros structures includes
-#include "sensor_msgs/NavSatFix.h"
+//#include "sensor_msgs/NavSatFix.h"
 
 
 

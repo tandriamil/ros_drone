@@ -1,4 +1,4 @@
-rsync -e "ssh -i ../config_rpi/id_rsa27" \
+rsync -e "ssh -i $PIKEYPATH" \
 --verbose --links --delete --compress --recursive --times --human-readable --no-perms \
 --exclude=".git" \
 --exclude=".gitignore" \
@@ -9,4 +9,4 @@ rsync -e "ssh -i ../config_rpi/id_rsa27" \
 --include="devel/setup.sh" \
 --include="devel/setup.zsh" \
 catkin_workspace \
-pi@raspberrypi.local:/home/pi/ros_drone
+pi@10.5.5.1:/home/pi/ros_drone
