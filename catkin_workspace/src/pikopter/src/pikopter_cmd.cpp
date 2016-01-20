@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
 	ros::NodeHandle nodeHandle;
 	
 	// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
-	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("pikopter_mavlink", 1000);
+	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("mavros", 1000);
 	
 	// Frequency of how fast we loop
 	ros::Rate loop_rate(10);
@@ -181,11 +181,11 @@ int main(int argc, char *argv[]) {
 		// if nothing is received
 		else {
 			// if time is out
-			if(errno == 11)
-				ROS_ERROR("%s", "Receiving command time out \n");
+			if(errno != 11)
+			// 	ROS_ERROR("%s", "Receiving command time out \n");
 			
-			// if other errors occured
-			else
+			// // if other errors occured
+			// else
 				ROS_ERROR("Receiving command, %d, failed (errno: %d)\n", i, errno);
 
 			// We should send ping again... for server
