@@ -18,11 +18,24 @@
 /* Import Headers */
 #include "../include/pikopter/pikopter_cmd.h"
 
+using namespace std;
+
 
 /* Declarations */
 char *STATION_IP = NULL;
 static struct sockaddr_in addr_drone;
 int comfd = 0; // in read mode -- receive command
+
+typedef struct command {
+	string cmd;
+	int seq;
+	int tcmd;
+	int param1;
+	int param2;
+	int param3;
+	int param4;
+	int param5;
+} Command;
 
 /* Functions */
 
@@ -33,21 +46,34 @@ int comfd = 0; // in read mode -- receive command
  *
  * \return the command
  */
-void parseCommand(char *buf) {
+Command parseCommand(char *buf) {
+	Command command;
 	char cmd[PACKET_SIZE];
 	int seq, tcmd, p1, p2, p3, p4, p5;
+	
 	static int pseq, ptcmd = 0, pp1 = 0, pp2 = 0, pp3 = 0, pp4 = 0, pp5 = 0;
 
 	//AT*FTRIM=7
 	//AT*REF=78,290718208
 
-	if (!buf) return;
+	command.seq = 0;
+	command.tcmd = 0;
+	command.param1 = 0;
+	command.param2 = 0;
+	command.param3 = 0;
+	command.param4 = 0;
+	command.param5 = 0;
+
+
+	if (!buf) return command;
 
 	// use sscan to parse the command
 	if(sscanf(buf, "AT*FTRIM=%d", &seq) == 1) {
 		tcmd = -1;
-		if(tcmd != ptcmd)
+		if(tcmd != ptcmd) {
 			fprintf(stderr, "%s\n", "AT*FTRIM");
+		}
+		command.cmd = "AT*FTRIM";
 	}
 
 	else if(sscanf(buf, "AT*REF=%d, %d", &seq, &tcmd) == 2) {
@@ -68,6 +94,7 @@ void parseCommand(char *buf) {
 		default:
 			fprintf(stderr, "%s\n","UNKNOWN");
 		}
+		command.cmd = "AT*REF";
 	}
 
 	else if(sscanf(buf, "AT*PCMD=%d, %d, %d, %d, %d, %d", &seq, &p1, &p2, &p3, &p4, &p5) == 6) {
@@ -95,9 +122,20 @@ void parseCommand(char *buf) {
 			}
 		}
 		pp1 = p1; pp2= p2; pp3= p3; pp4= p4; pp5= p5;
+		command.cmd = "AT*PCMD";
 	}
 
+	command.seq = seq;
+	command.param1 = p1;
+	command.param2 = p2;
+	command.param3 = p3;
+	command.param4 = p4;
+	command.param5 = p5;
+	command.tcmd = tcmd;
+	
 	ptcmd = tcmd;
+
+	return command;
 }
 
 //////////////////// Parrot channels
@@ -128,6 +166,8 @@ int main(int argc, char *argv[]) {
 	// set a timeout
 	tv.tv_sec = 0;
   	tv.tv_usec = 100000; // 100ms
+
+  	Command command;
 	
 	// Open the UDP port for the cmd node
 	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &addr_drone, argv[1]);
@@ -150,8 +190,6 @@ int main(int argc, char *argv[]) {
 	// Create a NodeHandle
 	ros::NodeHandle nodeHandle;
 	
-	// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
-	ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("mavros", 1000);
 	
 	// Frequency of how fast we loop
 	ros::Rate loop_rate(10);
@@ -175,7 +213,28 @@ int main(int argc, char *argv[]) {
 		if(ret > 0) {			
 			// Get command
 			printf("%s\n", commandBuffer);
-			parseCommand((char *) commandBuffer);
+			command = parseCommand((char *) commandBuffer);
+			
+			if(!command.cmd.empty()) {
+				cout << "Command received : " << command.cmd << "\n";
+			}
+			printf("Seq number received : %d\n", command.seq);
+			printf("tcmd received : %d\n", command.tcmd);
+			printf("Param 1 received : %d\n", command.param1);
+			printf("Param 2 received : %d\n", command.param2);
+			printf("Param 3 received : %d\n", command.param3);
+			printf("Param 4 received : %d\n", command.param4);
+			printf("Param 5 received : %d\n", command.param5);
+
+			// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
+			
+			/* --- A MODIFIER --- */
+			
+			/* -- Le topic sur lequel ce noeud doit publier dépend de la commande reçue -- */
+			// ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("mavros", 1000);
+
+			/* ------------------ */
+
 		}
 
 		// if nothing is received
