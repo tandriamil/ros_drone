@@ -11,6 +11,10 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 
 	// Open the UDP port for the navadata node
 	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, ip_adress);
+	if (navdata_fd == ERROR_ENCOUNTERED){
+		ROS_FATAL("Fatal error during the opening of the navdata socket\n");
+		exit(EXIT_FAILURE);
+	}
 
 	// The other attributes got their memory allocated automatically
 }
@@ -31,16 +35,13 @@ PikopterNavdata::~PikopterNavdata() {
 /*!
  * \brief Fill the navdata buffer
  */
-void fillNavDataBuffer(char* buffer, int alt) {
-
-	// Clean navdata_buffer
-	memset(buffer, 0, PACKET_SIZE);
+void PikopterNavdata::fillNavdata() {
 
 	// We create a navdata_t union and fill it
 	static union navdata_t data;
 	data.demo.tag = TAG_DEMO;
 	data.demo.vbat_flying_percentage = 100;
-	data.demo.altitude = alt;
+	data.demo.altitude = 100;
 	data.demo.theta = 0;
 	data.demo.phi = 0;
 	data.demo.psi = 0;
@@ -48,8 +49,38 @@ void fillNavDataBuffer(char* buffer, int alt) {
 	data.demo.vy = 0;
 	data.demo.vz = 0;
 
-	// And then we copy its content into the buffer
-	memcpy(buffer, &data, PACKET_SIZE);
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Clean the buffer than put the new values into it
+	memset(navdata_buffer, 0, PACKET_SIZE);
+	memcpy(navdata_buffer, &data, PACKET_SIZE);
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+}
+
+
+/*!
+ * \brief Send the navdata
+ */
+void PikopterNavdata::sendNavdata() {
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Try to send the navdata
+	ssize_t sent_size = sendto(navdata_fd, navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+
+	// Display error if there's one
+	if (sent_size < 0) {
+		perror("Send of navdata packet didn't work");
+		ROS_ERROR("Send of navdata packet didn't work");
+	}
+
 }
 
 
@@ -80,7 +111,7 @@ int main(int argc, char **argv) {
 	// Check the command syntax
 	if (argc != 2) {
 		ROS_FATAL("Command syntax is:\n \trosrun pikopter pikopter_navdata \"ip_address\"\n");
-		return -1;
+		return ERROR_ENCOUNTERED;
 	}
 
 	// Create a pikopter navdata object
@@ -98,9 +129,6 @@ int main(int argc, char **argv) {
 	// Debug message
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
-	// Get the length of the socket
-	socklen_t len = sizeof(pn->addr_drone_navdata);
-
 	// Here we receive the navdatas from pikopter_mavlink
 	//**ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/global", 10, chatterCallback);
 
@@ -115,12 +143,10 @@ int main(int argc, char **argv) {
 	while(ros::ok()) {
 
 		// We fill the navdata buffer here
-		fillNavDataBuffer((char*)pn->navdata_buffer, 100);
+		pn->fillNavdata();
 
 		// And then we send it
-		if (sendto(pn->navdata_fd, pn->navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&pn->addr_drone_navdata, sizeof(pn->addr_drone_navdata)) < 0) {
-			perror("Send of navdata packet didn't work");
-		}
+		pn->sendNavdata();
 
 		// Pause in loop with the given value defined in ros::rate
 		loop_rate.sleep();
@@ -130,5 +156,5 @@ int main(int argc, char **argv) {
 	delete pn;
 
 	// Return the correct end status
-	return 0;
+	return NO_ERROR_ENCOUNTERED;
 }

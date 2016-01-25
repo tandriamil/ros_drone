@@ -16,7 +16,7 @@
 #define PORT_NAVDATA 5554
 
 // Loop rate in hertz
-#define NAVDATA_LOOP_RATE 33  // Basically, every 30*1000 microseconds, so 33 times per seconds
+#define NAVDATA_LOOP_RATE 200  // By the ArDrone doc, rate < 5ms, so 200 times per seconds
 
 // A tag to say if it's a demo or not
 #define TAG_DEMO 0
@@ -113,8 +113,8 @@ typedef enum {
 // Some options for the navdata paquets
 struct navdata_option {
 	uint16_t  tag;  // Type of the packet: DEMO, etc.
-	uint16_t  size;
-	uint8_t   data[];
+	uint16_t  size;  // Size of this struct (options fields can have different sizes)
+	uint8_t   data[];  // The real datas received
 };
 
 // The navdata paquet itself
@@ -175,14 +175,21 @@ class PikopterNavdata {
 	// Public part
 	public:
 
-		// Attributes
-		struct sockaddr_in addr_drone_navdata;
-		unsigned char navdata_buffer[PACKET_SIZE];
-		int navdata_fd;
-
 		// Functions
 		PikopterNavdata(char *ip_adress);  // Constructor
 		~PikopterNavdata();  // Destructor
+		void fillNavdata();  // Debug method in order to test with inconsistent values
+		void sendNavdata();  // Send the navdata
+
+
+	// Private part
+	private:
+
+		// Private attributes
+		struct sockaddr_in addr_drone_navdata;
+		unsigned char navdata_buffer[PACKET_SIZE];
+		int navdata_fd;
+		std::mutex navdata_mutex;
 };
 
 #endif
