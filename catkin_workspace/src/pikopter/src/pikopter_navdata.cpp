@@ -80,13 +80,14 @@ void PikopterNavdata::sendNavdata() {
 /*!
  * \brief Function called when a message is published on X node
  */
-void PikopterNavdata::getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg) 
+void PikopterNavdata::getAltitude(const std_msgs::Float64::ConstPtr& msg) 
 {
+	fprintf(stderr, "Entered altitude with value=%f\n", (float)msg->data);
 
 /* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
-	navdata_current.demo.altitude = msg->altitude;
+	navdata_current.demo.altitude = (int32_t)msg->data;
 
 /* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -123,6 +124,8 @@ void PikopterNavdata::display()
  * \brief Put the battery datas into the navdata
  */
 void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg) {
+
+	fprintf(stderr, "Entered battery with value=%d\n", (int)(msg->remaining * 100));
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
@@ -168,9 +171,8 @@ int main(int argc, char **argv) {
 	// Debug message
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
-
 	// Here we receive the navdatas from pikopter_mavlink
-	//ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10,&PikopterNavdata::getAltitude, pn);
+	ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10, &PikopterNavdata::getAltitude, pn);
 
 	// Here we receive the battery state
 	ros::Subscriber sys_status_battery = navdata_node_handle.subscribe("mavros/sys_status/battery", 10, &PikopterNavdata::handleBattery, pn);

@@ -7,7 +7,7 @@
 #include "pikopter_common.h"
 
 // Mavros structures includes
-#include "sensor_msgs/NavSatFix.h"
+#include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
 
 
@@ -17,7 +17,7 @@
 #define PORT_NAVDATA 5554
 
 // Loop rate in hertz
-#define NAVDATA_LOOP_RATE 200  // By the ArDrone doc, rate < 5ms, so 200 times per seconds
+#define NAVDATA_LOOP_RATE 1  // By the ArDrone doc, rate < 5ms, so 200 times per seconds
 
 // A tag to say if it's a demo or not
 #define TAG_DEMO 0
@@ -183,7 +183,7 @@ class PikopterNavdata {
 		void sendNavdata();  // Send the navdata
 
 		// Handlers
-		void getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg);
+		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
 		void handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg);
 		void display();
 
