@@ -190,11 +190,6 @@ int main(int argc, char *argv[]) {
 
 	// Create a NodeHandle
 	ros::NodeHandle nodeHandle;
-	
-	
-	// Frequency of how fast we loop
-	ros::Rate loop_rate(10);
-
 
 	// The first argument is the IP address of the Raspberry PI
 	STATION_IP = argv[1];
@@ -253,9 +248,6 @@ int main(int argc, char *argv[]) {
 		}
 
 		ros::spinOnce();
-
-		// Pause in loop with the given value defined in ros::rate
-		loop_rate.sleep();
 	}
 
 	// close UDP socket
