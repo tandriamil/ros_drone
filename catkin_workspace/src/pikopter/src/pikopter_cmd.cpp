@@ -124,16 +124,17 @@ Command parseCommand(char *buf) {
 		pp1 = p1; pp2= p2; pp3= p3; pp4= p4; pp5= p5;
 		command.cmd = "AT*PCMD";
 	}
-
-	command.seq = seq;
-	command.param1 = p1;
-	command.param2 = p2;
-	command.param3 = p3;
-	command.param4 = p4;
-	command.param5 = p5;
-	command.tcmd = tcmd;
 	
 	ptcmd = tcmd;
+
+	command.seq = seq;
+	command.param1 = pp1;
+	command.param2 = pp2;
+	command.param3 = pp3;
+	command.param4 = pp4;
+	command.param5 = pp5;
+	command.tcmd = ptcmd;
+	
 
 	return command;
 }
