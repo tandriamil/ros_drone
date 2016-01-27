@@ -1,12 +1,12 @@
 // Include pikopter navdata headers
 #include "../include/pikopter/pikopter_navdata.h"
 
-
 /*!
  * \brief Constructor of PikopterNavdata
  *
  * \param The ip adress on which we create the udp socket
  */
+
 PikopterNavdata::PikopterNavdata(char *ip_adress) {
 
 	// Open the UDP port for the navadata node
@@ -87,15 +87,30 @@ void PikopterNavdata::sendNavdata() {
 /*!
  * \brief Function called when a message is published on X node
  */
-/*void chatterCallback(const sensor_msgs::NavSatFix::ConstPtr& msg) {
+void PikopterNavdata::getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg) 
+{
+	static union navdata_t data ;
 
-	ROS_INFO("GET LOCATION !") ;
-	ROS_INFO("latitude : [%f]", msg->latitude) ;
-	ROS_INFO("longitude : [%f]", msg->longitude) ;
-	ROS_INFO("altitude : [%f]", msg->altitude) ;
+	ROS_INFO("GET altitude !") ;
 
-	//Traitement des données recues
-}*/
+/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	data.demo.altitude = msg->altitude;
+
+	printf("data.demo.tag : %d\n",data.demo.tag) ;
+	printf("data.demo.vbat_flying_percentage : %d\n",data.demo.vbat_flying_percentage) ;
+	printf("data.demo.altitude : %d\n",data.demo.altitude) ;
+	printf("data.demo.theta : %f\n",data.demo.theta) ;
+	printf("data.demo.phi : %f\n", data.demo.phi) ;
+	printf("data.demo.psi : %f\n", data.demo.psi) ;
+	printf("data.demo.vx : %f\n", data.demo.vx) ;
+	printf("data.demo.vy : %f\n", data.demo.vy) ;
+	printf("data.demo.vz : %f\n", data.demo.vz) ;
+
+/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+}
 
 
 /*!
@@ -105,6 +120,7 @@ void PikopterNavdata::sendNavdata() {
  * \param argv The arguments
  */
 int main(int argc, char **argv) {
+
 
 	/* ######################### Initialization ######################### */
 
@@ -130,7 +146,7 @@ int main(int argc, char **argv) {
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
 	// Here we receive the navdatas from pikopter_mavlink
-	//**ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/global", 10, chatterCallback);
+	ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10,&PikopterNavdata::getAltitude, pn);
 
 	/**
 	 * ros::spin() will enter a loop, pumping callbacks.  With this version, all
@@ -143,7 +159,7 @@ int main(int argc, char **argv) {
 	while(ros::ok()) {
 
 		// We fill the navdata buffer here
-		pn->fillNavdata();
+			//pn->fillNavdata();
 
 		// And then we send it
 		pn->sendNavdata();

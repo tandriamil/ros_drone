@@ -7,7 +7,7 @@
 #include "pikopter_common.h"
 
 // Mavros structures includes
-//#include "sensor_msgs/NavSatFix.h"
+#include "sensor_msgs/NavSatFix.h"
 
 
 
@@ -180,7 +180,7 @@ class PikopterNavdata {
 		~PikopterNavdata();  // Destructor
 		void fillNavdata();  // Debug method in order to test with inconsistent values
 		void sendNavdata();  // Send the navdata
-
+		void getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg) ;		
 
 	// Private part
 	private:
@@ -189,7 +189,7 @@ class PikopterNavdata {
 		struct sockaddr_in addr_drone_navdata;
 		unsigned char navdata_buffer[PACKET_SIZE];
 		int navdata_fd;
-		std::mutex navdata_mutex;
+		std::mutex navdata_mutex ;
 };
 
 #endif
