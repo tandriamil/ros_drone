@@ -8,6 +8,7 @@
 
 // Mavros structures includes
 #include "sensor_msgs/NavSatFix.h"
+#include "mavros_msgs/BatteryStatus.h"
 
 
 
@@ -175,19 +176,24 @@ class PikopterNavdata {
 	// Public part
 	public:
 
-		// Functions
+		// Public functions
 		PikopterNavdata(char *ip_adress);  // Constructor
 		~PikopterNavdata();  // Destructor
-		void fillNavdata();  // Debug method in order to test with inconsistent values
+		void initNavdata();  // Debug method in order to test with inconsistent values
 		void sendNavdata();  // Send the navdata
-		void getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg) ;		
+
+		// Handlers
+		void getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg);
+		void handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg);
+		void display();
+
 
 	// Private part
 	private:
 
 		// Private attributes
 		struct sockaddr_in addr_drone_navdata;
-		unsigned char navdata_buffer[PACKET_SIZE];
+		union navdata_t navdata_current;
 		int navdata_fd;
 		std::mutex navdata_mutex ;
 };

@@ -16,6 +16,9 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 		exit(EXIT_FAILURE);
 	}
 
+	// Initialise the navdata
+	initNavdata();
+
 	// The other attributes got their memory allocated automatically
 }
 
@@ -33,31 +36,21 @@ PikopterNavdata::~PikopterNavdata() {
 
 
 /*!
- * \brief Fill the navdata buffer
+ * \brief Init the navdata buffer
  */
-void PikopterNavdata::fillNavdata() {
+void PikopterNavdata::initNavdata() {
 
-	// We create a navdata_t union and fill it
-	static union navdata_t data;
-	data.demo.tag = TAG_DEMO;
-	data.demo.vbat_flying_percentage = 100;
-	data.demo.altitude = 100;
-	data.demo.theta = 0;
-	data.demo.phi = 0;
-	data.demo.psi = 0;
-	data.demo.vx = 0;
-	data.demo.vy = 0;
-	data.demo.vz = 0;
+	// We fill the current navdata
+	navdata_current.demo.tag = TAG_DEMO;
+	navdata_current.demo.vbat_flying_percentage = 100;
+	navdata_current.demo.altitude = 100;
+	navdata_current.demo.theta = 0;
+	navdata_current.demo.phi = 0;
+	navdata_current.demo.psi = 0;
+	navdata_current.demo.vx = 0;
+	navdata_current.demo.vy = 0;
+	navdata_current.demo.vz = 0;
 
-	/* ##### Enter Critical Section ##### */
-	navdata_mutex.lock();
-
-	// Clean the buffer than put the new values into it
-	memset(navdata_buffer, 0, PACKET_SIZE);
-	memcpy(navdata_buffer, &data, PACKET_SIZE);
-
-	/* ##### Exit Critical Section ##### */
-	navdata_mutex.unlock();
 }
 
 
@@ -70,7 +63,7 @@ void PikopterNavdata::sendNavdata() {
 	navdata_mutex.lock();
 
 	// Try to send the navdata
-	ssize_t sent_size = sendto(navdata_fd, navdata_buffer, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
+	ssize_t sent_size = sendto(navdata_fd, (unsigned char *)&navdata_current, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -89,27 +82,57 @@ void PikopterNavdata::sendNavdata() {
  */
 void PikopterNavdata::getAltitude(const sensor_msgs::NavSatFix::ConstPtr& msg) 
 {
-	static union navdata_t data ;
-
-	ROS_INFO("GET altitude !") ;
 
 /* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
-	data.demo.altitude = msg->altitude;
-
-	printf("data.demo.tag : %d\n",data.demo.tag) ;
-	printf("data.demo.vbat_flying_percentage : %d\n",data.demo.vbat_flying_percentage) ;
-	printf("data.demo.altitude : %d\n",data.demo.altitude) ;
-	printf("data.demo.theta : %f\n",data.demo.theta) ;
-	printf("data.demo.phi : %f\n", data.demo.phi) ;
-	printf("data.demo.psi : %f\n", data.demo.psi) ;
-	printf("data.demo.vx : %f\n", data.demo.vx) ;
-	printf("data.demo.vy : %f\n", data.demo.vy) ;
-	printf("data.demo.vz : %f\n", data.demo.vz) ;
+	navdata_current.demo.altitude = msg->altitude;
 
 /* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
+}
+
+
+/*!
+ * \brief Function called when a message is published on X node
+ */
+void PikopterNavdata::display() 
+{
+
+	ROS_INFO("Display navdata:") ;
+
+/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	printf("data.demo.tag : %d\n",navdata_current.demo.tag) ;
+	printf("data.demo.vbat_flying_percentage : %d\n",navdata_current.demo.vbat_flying_percentage) ;
+	printf("data.demo.altitude : %d\n",navdata_current.demo.altitude) ;
+	printf("data.demo.theta : %f\n",navdata_current.demo.theta) ;
+	printf("data.demo.phi : %f\n", navdata_current.demo.phi) ;
+	printf("data.demo.psi : %f\n", navdata_current.demo.psi) ;
+	printf("data.demo.vx : %f\n", navdata_current.demo.vx) ;
+	printf("data.demo.vy : %f\n", navdata_current.demo.vy) ;
+	printf("data.demo.vz : %f\n", navdata_current.demo.vz) ;
+
+/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+}
+
+
+/*!
+ * \brief Put the battery datas into the navdata
+ */
+void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg) {
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Put the correct battery status then
+	navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->remaining * 100);
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+
 }
 
 
@@ -145,21 +168,18 @@ int main(int argc, char **argv) {
 	// Debug message
 	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
-	// Here we receive the navdatas from pikopter_mavlink
-	ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10,&PikopterNavdata::getAltitude, pn);
 
-	/**
-	 * ros::spin() will enter a loop, pumping callbacks.  With this version, all
-	 * callbacks will be called from within this thread (the main one).  ros::spin()
-	 * will exit when Ctrl-C is pressed, or the node is shutdown by the master.
-	 */
-	//ros::spin();
+	// Here we receive the navdatas from pikopter_mavlink
+	//ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10,&PikopterNavdata::getAltitude, pn);
+
+	// Here we receive the battery state
+	ros::Subscriber sys_status_battery = navdata_node_handle.subscribe("mavros/sys_status/battery", 10, &PikopterNavdata::handleBattery, pn);
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
 
-		// We fill the navdata buffer here
-			//pn->fillNavdata();
+		// Display the state of the navdata (for debug)
+		pn->display();
 
 		// And then we send it
 		pn->sendNavdata();
