@@ -14,7 +14,7 @@
 int PikopterNetwork::open_udp_socket(int portnum, struct sockaddr_in *serv_addr, char *station_ip) {
 	
 	// The file descriptor
-	int listenfd = -1;
+	int listenfd = ERROR_ENCOUNTERED;
 
 	// Only if an address is given
 	if (serv_addr) {

@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <sstream>
 #include "std_msgs/String.h"
+#include "mutex"
 
 // Ros librairies in order to use them
 #include "ros/ros.h"
@@ -32,9 +33,12 @@
 // Size of the packets (navdata or command)
 #define PACKET_SIZE 256
 
+// Return values
+#define NO_ERROR_ENCOUNTERED 0
+#define ERROR_ENCOUNTERED -1
+
 // Errors result got if error during socket manipulation
-#define SOCKET_ERROR -1
-#define SOCKET_ERRNO errno
+//#define SOCKET_ERRNO errno
 
 // DUNO
 #define MSG_NOBLOCK (1 << 0)

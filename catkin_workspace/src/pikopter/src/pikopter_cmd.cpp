@@ -69,7 +69,7 @@ Command parseCommand(char *buf) {
 
 	// use sscan to parse the command
 	if(sscanf(buf, "AT*FTRIM=%d", &seq) == 1) {
-		tcmd = -1;
+		tcmd = ERROR_ENCOUNTERED;
 		if(tcmd != ptcmd) {
 			fprintf(stderr, "%s\n", "AT*FTRIM");
 		}
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 
 	if(argc < 2) {
 		ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
-		return -1;
+		return ERROR_ENCOUNTERED;
 	}
 
 	// Create a NodeHandle
@@ -262,5 +262,5 @@ int main(int argc, char *argv[]) {
 	close(comfd);
 
 	ros::shutdown();
-	return 0;
+	return NO_ERROR_ENCOUNTERED;
 }
