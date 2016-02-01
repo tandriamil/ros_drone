@@ -12,7 +12,8 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 	// Open the UDP port for the navadata node
 	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, ip_adress);
 	if (navdata_fd == ERROR_ENCOUNTERED){
-		ROS_FATAL("Fatal error during the opening of the navdata socket\n");
+		ROS_FATAL("Fatal error during the opening of the navdata socket");
+		ROS_FATAL("Fatal error code %d", navdata_fd);
 		exit(EXIT_FAILURE);
 	}
 
@@ -69,10 +70,7 @@ void PikopterNavdata::sendNavdata() {
 	navdata_mutex.unlock();
 
 	// Display error if there's one
-	if (sent_size < 0) {
-		perror("Send of navdata packet didn't work");
-		ROS_ERROR("Send of navdata packet didn't work");
-	}
+	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work");
 
 }
 
@@ -80,16 +78,16 @@ void PikopterNavdata::sendNavdata() {
 /*!
  * \brief Function called when a message is published on X node
  */
-void PikopterNavdata::getAltitude(const std_msgs::Float64::ConstPtr& msg) 
-{
-	fprintf(stderr, "Entered altitude with value=%f\n", (float)msg->data);
+void PikopterNavdata::getAltitude(const std_msgs::Float64::ConstPtr& msg)  {
 
-/* ##### Enter Critical Section ##### */
+	ROS_DEBUG("Entered altitude with value=%f", (float)msg->data);
+
+	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
 	navdata_current.demo.altitude = (int32_t)msg->data;
 
-/* ##### Exit Critical Section ##### */
+	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 }
 
@@ -97,25 +95,25 @@ void PikopterNavdata::getAltitude(const std_msgs::Float64::ConstPtr& msg)
 /*!
  * \brief Function called when a message is published on X node
  */
-void PikopterNavdata::display() 
-{
+void PikopterNavdata::display() {
 
-	ROS_INFO("Display navdata:") ;
+	ROS_DEBUG("Current state of the Navdata:");
 
-/* ##### Enter Critical Section ##### */
+	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
-	printf("data.demo.tag : %d\n",navdata_current.demo.tag) ;
-	printf("data.demo.vbat_flying_percentage : %d\n",navdata_current.demo.vbat_flying_percentage) ;
-	printf("data.demo.altitude : %d\n",navdata_current.demo.altitude) ;
-	printf("data.demo.theta : %f\n",navdata_current.demo.theta) ;
-	printf("data.demo.phi : %f\n", navdata_current.demo.phi) ;
-	printf("data.demo.psi : %f\n", navdata_current.demo.psi) ;
-	printf("data.demo.vx : %f\n", navdata_current.demo.vx) ;
-	printf("data.demo.vy : %f\n", navdata_current.demo.vy) ;
-	printf("data.demo.vz : %f\n", navdata_current.demo.vz) ;
+	ROS_DEBUG("\tdata.demo.tag : %d",navdata_current.demo.tag);
+	ROS_DEBUG("\tdata.demo.vbat_flying_percentage : %d",navdata_current.demo.vbat_flying_percentage);
+	ROS_DEBUG("\tdata.demo.altitude : %d",navdata_current.demo.altitude);
+	ROS_DEBUG("\tdata.demo.theta : %f",navdata_current.demo.theta);
+	ROS_DEBUG("\tdata.demo.phi : %f", navdata_current.demo.phi);
+	ROS_DEBUG("\tdata.demo.psi : %f", navdata_current.demo.psi);
+	ROS_DEBUG("\tdata.demo.vx : %f", navdata_current.demo.vx);
+	ROS_DEBUG("\tdata.demo.vy : %f", navdata_current.demo.vy);
+	ROS_DEBUG("\tdata.demo.vz : %f", navdata_current.demo.vz);
+	ROS_DEBUG(" ");
 
-/* ##### Exit Critical Section ##### */
+	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 }
 
@@ -125,7 +123,7 @@ void PikopterNavdata::display()
  */
 void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg) {
 
-	fprintf(stderr, "Entered battery with value=%d\n", (int)(msg->remaining * 100));
+	ROS_DEBUG("Entered battery with value=%d", (int)(msg->remaining * 100));
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
@@ -152,7 +150,7 @@ int main(int argc, char **argv) {
 
 	// Check the command syntax
 	if (argc != 2) {
-		ROS_FATAL("Command syntax is:\n \trosrun pikopter pikopter_navdata \"ip_address\"\n");
+		ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
 		return ERROR_ENCOUNTERED;
 	}
 
@@ -169,13 +167,13 @@ int main(int argc, char **argv) {
 	ros::Rate loop_rate(NAVDATA_LOOP_RATE);
 
 	// Debug message
-	ROS_DEBUG("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
+	ROS_INFO("Ros initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
 	// Here we receive the navdatas from pikopter_mavlink
-	ros::Subscriber sub = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10, &PikopterNavdata::getAltitude, pn);
+	ros::Subscriber sub_mavros_global_position_rel_alt = navdata_node_handle.subscribe("mavros/global_position/rel_alt", 10, &PikopterNavdata::getAltitude, pn);
 
 	// Here we receive the battery state
-	ros::Subscriber sys_status_battery = navdata_node_handle.subscribe("mavros/sys_status/battery", 10, &PikopterNavdata::handleBattery, pn);
+	ros::Subscriber sub_mavros_battery = navdata_node_handle.subscribe("mavros/battery", 10, &PikopterNavdata::handleBattery, pn);
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
@@ -186,9 +184,14 @@ int main(int argc, char **argv) {
 		// And then we send it
 		pn->sendNavdata();
 
+		// Spin once
+		ros::spinOnce();
+
 		// Pause in loop with the given value defined in ros::rate
 		loop_rate.sleep();
 	}
+
+	ROS_INFO("Exited the ros::ok() loop. Goodbye!");
 
 	// Destroy the PikopterNavdata object before leaving the program
 	delete pn;

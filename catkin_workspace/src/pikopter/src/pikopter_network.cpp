@@ -18,7 +18,8 @@ int PikopterNetwork::open_udp_socket(int portnum, struct sockaddr_in *serv_addr,
 
 	// Only if an address is given
 	if (serv_addr) {
-		fprintf(stderr, "INFO: Starting socket\n");
+
+		ROS_INFO("Starting socket on %s:%d", station_ip, portnum);
 
 		// Create an UDP socket at the port
 		listenfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -32,10 +33,10 @@ int PikopterNetwork::open_udp_socket(int portnum, struct sockaddr_in *serv_addr,
 
 		// If en error occurs during converting the station's IP into formatted IP format
 		if (inet_aton(station_ip, &(serv_addr->sin_addr)) == 0) {
-			fprintf(stderr, "ERROR: inet_aton() failed (port %d)\n", portnum);
-			exit(1);
+			ROS_FATAL("inet_aton() failed on %s:%d", station_ip, portnum);
+			exit(ERROR_ENCOUNTERED);
 		}
-		fprintf(stderr, "INFO: connect socket (%s:%d) done\n", station_ip, portnum);
+		ROS_INFO("Socket connected on %s:%d", station_ip, portnum);
 	}
 
 	// Return the value of the fd or -1 if error
