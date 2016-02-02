@@ -6,18 +6,21 @@
 // Pikotper common includes
 #include "pikopter_common.h"
 
-// Mavros structures includes
+// Mavros structures includes for the subscribers
 #include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
+
+// Mavros structures includes for the services used
+#include "mavros_msgs/StreamRate.h"
+
 
 
 
 /* ################################### CONSTANTS ################################### */
+
+/* ##### Specific to the navdatas (got from the given codes) ##### */
 // The port used for the navdatas
 #define PORT_NAVDATA 5554
-
-// Loop rate in hertz
-#define NAVDATA_LOOP_RATE 1  // By the ArDrone doc, rate < 5ms, so 200 times per seconds
 
 // A tag to say if it's a demo or not
 #define TAG_DEMO 0
@@ -27,11 +30,36 @@
 #define NAVDATA_NREADS_INT 4
 #define NAVDATA_NREADS_FLOAT 6
 
+// Types definition
 #define float32_t float
 #define float64_t double
 
 // 2 spaces
 #define DEMO_LEN NAVDATA_NREADS_INT*(INT_LEN+1)+(NAVDATA_NREADS_FLOAT*FLOAT_LEN+1)+2
+
+
+/* ##### Specific to navdata ros parameters ##### */
+// Loop rate in hertz
+#define NAVDATA_LOOP_RATE 1  // By the ArDrone doc, normally rate < 5ms, so 200 times per seconds but it's too much
+
+// Subscribers' buffer size
+#define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 10
+#define SUB_BUF_SIZE_BATTERY 10
+
+
+/* ##### Specific to navdata (new constants) ##### */
+// The value of the battery percentage
+#define BATTERY_PERCENTAGE 100  // 1 => Give 0.05, 100 => Give 5%
+
+// Default values of the navdata demo buffer
+#define DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE 100
+#define DEFAULT_NAVDATA_DEMO_ALTITUDE 0
+#define DEFAULT_NAVDATA_DEMO_THETA 0
+#define DEFAULT_NAVDATA_DEMO_PHI 0
+#define DEFAULT_NAVDATA_DEMO_PSI 0
+#define DEFAULT_NAVDATA_DEMO_VX 0
+#define DEFAULT_NAVDATA_DEMO_VY 0
+#define DEFAULT_NAVDATA_DEMO_VZ 0
 
 
 
@@ -179,7 +207,6 @@ class PikopterNavdata {
 		// Public functions
 		PikopterNavdata(char *ip_adress);  // Constructor
 		~PikopterNavdata();  // Destructor
-		void initNavdata();  // Debug method in order to test with inconsistent values
 		void sendNavdata();  // Send the navdata
 
 		// Handlers
@@ -190,6 +217,10 @@ class PikopterNavdata {
 
 	// Private part
 	private:
+
+		// Private functions
+		void initNavdata();
+		void askMavrosRate();
 
 		// Private attributes
 		struct sockaddr_in addr_drone_navdata;
