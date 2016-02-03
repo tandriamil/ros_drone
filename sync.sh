@@ -3,8 +3,9 @@ rsync -e "ssh -i $PIKEYPATH" \
 --exclude=".git" \
 --exclude=".gitignore" \
 --exclude="sync.sh" \
---exclude="catkin_workspace/build" \
+--exclude="build" \
 --exclude="devel" \
+--exclude="src/CMakeFiles" \
 --include="devel/setup.bash" \
 --include="devel/setup.sh" \
 --include="devel/setup.zsh" \

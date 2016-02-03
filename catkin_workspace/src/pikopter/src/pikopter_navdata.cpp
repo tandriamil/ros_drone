@@ -45,18 +45,20 @@ PikopterNavdata::~PikopterNavdata() {
 void PikopterNavdata::askMavrosRate() {
 
 	// Check that the service does exist
-	if (!ros::service::exists("set_stream_rate", false)) {  // Second parameter is whether we print the error or not
-		ROS_ERROR("Can't put the stream rate for navdatas because set_stream_rate service is unavailable");
+	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second parameter is whether we print the error or not
+		ROS_ERROR("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable");
 	} else {
 
 		// Create a StreamRate service handler to call the request
 		mavros_msgs::StreamRate sr;
 
-		// TODO: Build the correct request to ask for the rate
 		// TODO: Find the correct options to ask only what we need for the moment
+		sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
+		sr.request.message_rate = (uint16_t)5;
+		sr.request.on_off = (uint8_t)1;
 
 		// Call the service
-		if (ros::service::call("set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
+		if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
 		else ROS_ERROR("Call on set_stream_rate service failed");
 	}
 
@@ -182,14 +184,14 @@ int main(int argc, char **argv) {
 		return ERROR_ENCOUNTERED;
 	}
 
-	// Create a pikopter navdata object
-	PikopterNavdata *pn = new PikopterNavdata(argv[1]);
-
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_navdata");
 
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle navdata_node_handle;
+
+	// Create a pikopter navdata object
+	PikopterNavdata *pn = new PikopterNavdata(argv[1]);
 
 	// Put the rate for this node
 	ros::Rate loop_rate(NAVDATA_LOOP_RATE);

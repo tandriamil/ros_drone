@@ -12,6 +12,7 @@
 
 // Mavros structures includes for the services used
 #include "mavros_msgs/StreamRate.h"
+#include "ros/types.h"
 
 
 
