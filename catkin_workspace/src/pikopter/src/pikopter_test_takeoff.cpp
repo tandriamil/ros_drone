@@ -17,6 +17,8 @@
 #include "../include/pikopter/pikopter_common.h"
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/CommandBool.h>
+#include <geometry_msgs/TwistStamped.h>
 
 
 /*!
@@ -40,20 +42,65 @@ int main(int argc, char *argv[]) {
 	// Create a NodeHandle
 	ros::NodeHandle nodeHandle;
 
-	ros::ServiceClient clientMode = nodeHandle.serviceClient<mavros_msgs::SetMode>("/mavros_msgs/set_mode");
+	ros::Publisher velocity_pub = nodeHandle.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);	
 
-	ros::ServiceClient clientTOL = nodeHandle.serviceClient<mavros_msgs::CommandTOL>("/mavros_msgs/cmd/takeoff");
+	mavros_msgs::SetMode srvGuided;
+	mavros_msgs::CommandTOL srvTakeOffLand;
+	mavros_msgs::CommandBool srvArmed;
+	geometry_msgs::TwistStamped msgMove;
 
-	mavros_msgs::SetMode srvMode;
-	mavros_msgs::CommandTOL srvTOL;
+	srvGuided.request.custom_mode = "GUIDED";
+	srvGuided.request.base_mode = 0;
+	srvTakeOffLand.request.altitude = 50;
+	srvArmed.request.value = true;
 
-	srvMode.request.base_mode = 216; // MAV_MODE_GUIDED_ARMED
-	srvTOL.request.altitude = 2;
+	if(ros::service::call("/mavros/set_mode", srvGuided))
+		ROS_INFO("Mode MAV_MODE_GUIDED activated.");
+	else
+		ROS_ERROR("Problem occured on calling set_mode service");
 
-	if(clientMode.call(srvMode)) {
-		ROS_INFO("Mode MAV_MODE_GUIDED_ARMED activated.");
-	}
-	clientTOL.call(srvTOL);
+	if(ros::service::call("/mavros/cmd/arming", srvArmed))
+		ROS_INFO("Arming command called.");
+	else
+		ROS_ERROR("Problem occured on calling arming command");
 
+	if(ros::service::call("/mavros/cmd/takeoff", srvTakeOffLand))
+		ROS_INFO("Takeoff called");
+	else
+		ROS_ERROR("Problem occured on calling takeoff command");
+
+	sleep(5);
+	
+	msgMove.header.stamp = ros::Time::now();
+	msgMove.twist.linear.x = 10;
+
+	msgMove.twist.angular.x = 10;
+	msgMove.twist.angular.y = 20;
+	msgMove.twist.angular.z = 30;
+
+	velocity_pub.publish(msgMove);
+
+	ROS_INFO("Drone is moving :");
+	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
+	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
+
+	sleep(15);
+
+	msgMove.header.stamp = ros::Time::now();
+	msgMove.twist.linear.x = 0;
+	msgMove.twist.angular.z = 0;
+
+	velocity_pub.publish(msgMove);
+	
+	ROS_INFO("Drone is stopping :");
+	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
+	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
+
+	sleep(5);
+
+	if(ros::service::call("/mavros/cmd/land", srvTakeOffLand))
+		ROS_INFO("Land called");
+	else
+		ROS_ERROR("Problem occured on calling land command");
 	return 0;
 }
