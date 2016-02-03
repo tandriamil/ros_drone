@@ -153,13 +153,31 @@ void PikopterNavdata::display() {
  */
 void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg) {
 
-	ROS_DEBUG("Entered battery with value=%d", (int)(msg->remaining * BATTERY_PERCENTAGE));
+	//ROS_DEBUG("Entered battery with value=%d", (int)(msg->remaining * BATTERY_PERCENTAGE));
+	ROS_DEBUG("Entered battery with value=%d", (int)(msg->voltage / BATTERY_PERCENTAGE));
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
 	// Put the correct battery status then
-	navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->remaining * BATTERY_PERCENTAGE);
+	//navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->remaining * BATTERY_PERCENTAGE);
+	navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->voltage / BATTERY_PERCENTAGE);
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+
+}
+
+
+/*!
+ * \brief Put the velocity datas into the navdata
+ */
+void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg) {
+
+	ROS_DEBUG("Entered velocity with (x = %f, y = %f, z = %f)", msg->twist->linear->x, msg->twist->linear->y, msg->twist->linear->y);
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -199,11 +217,16 @@ int main(int argc, char **argv) {
 	// Debug message
 	ROS_INFO("Navdata node initialized with a rate of %u", NAVDATA_LOOP_RATE);
 
+
+	/* ##### All the subscribers to receive datas ##### */
 	// Here we receive the navdatas from pikopter_mavlink
 	ros::Subscriber sub_mavros_global_position_rel_alt = navdata_node_handle.subscribe("mavros/global_position/rel_alt", SUB_BUF_SIZE_GLOBAL_POS_REL_ALT, &PikopterNavdata::getAltitude, pn);
 
 	// Here we receive the battery state
 	ros::Subscriber sub_mavros_battery = navdata_node_handle.subscribe("mavros/battery", SUB_BUF_SIZE_BATTERY, &PikopterNavdata::handleBattery, pn);
+
+	// Here we receive the velocity
+	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/global_position/gp_vel", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {

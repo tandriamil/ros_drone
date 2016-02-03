@@ -9,6 +9,7 @@
 // Mavros structures includes for the subscribers
 #include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
+#include "geometry_msgs/TwistStamped.h"
 
 // Mavros structures includes for the services used
 #include "mavros_msgs/StreamRate.h"
@@ -43,13 +44,15 @@
 #define NAVDATA_LOOP_RATE 1  // By the ArDrone doc, normally rate < 5ms, so 200 times per seconds but it's too much
 
 // Subscribers' buffer size
-#define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 10
-#define SUB_BUF_SIZE_BATTERY 10
+#define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
+#define SUB_BUF_SIZE_BATTERY 1
+#define SUB_BUF_SIZE_GLOBAL_POS_GP_VEL 1
 
 
 /* ##### Specific to navdata (new constants) ##### */
 // The value of the battery percentage
-#define BATTERY_PERCENTAGE 100  // 1 => Give 0.05, 100 => Give 5%
+//#define BATTERY_PERCENTAGE 100  // 1 => Give 0.05, 100 => Give 5%
+#define BATTERY_PERCENTAGE 1000  // 1 => Give same, 1000 => To put V to mV
 
 // Default values of the navdata demo buffer
 #define DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE 100
@@ -208,11 +211,12 @@ class PikopterNavdata {
 		PikopterNavdata(char *ip_adress);  // Constructor
 		~PikopterNavdata();  // Destructor
 		void sendNavdata();  // Send the navdata
+		void display();  // Display the current method of the navdata
 
 		// Handlers
 		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
 		void handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg);
-		void display();
+		void handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg);
 
 
 	// Private part
