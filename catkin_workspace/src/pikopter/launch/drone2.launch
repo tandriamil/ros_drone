@@ -1,0 +1,5 @@
+<launch>
+        <include file="$(find pikopter)/launch/105.launch"/>
+        <node pkg="pikopter" type="pikopter_cmd" name="pikopter_cmd" args="10.1.1.105" output="screen"/>
+        <node pkg="pikopter" type="pikopter_test_takeoff" name="pikopter_test_takeoff" output="screen"/>
+</launch>
