@@ -10,6 +10,7 @@
 #include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "mavros_msgs/ExtendedState.h"
 
 // Mavros structures includes for the services used
 #include "mavros_msgs/StreamRate.h"
@@ -47,6 +48,7 @@
 #define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
 #define SUB_BUF_SIZE_BATTERY 1
 #define SUB_BUF_SIZE_GLOBAL_POS_GP_VEL 1
+#define SUB_BUF_SIZE_EXTENDED_STATE 1
 
 
 /* ##### Specific to navdata (new constants) ##### */
@@ -217,7 +219,7 @@ class PikopterNavdata {
 		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
 		void handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg);
 		void handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg);
-
+		void getState(const mavros_msgs::ExtendedState::ConstPtr& msg) ;
 
 	// Private part
 	private:

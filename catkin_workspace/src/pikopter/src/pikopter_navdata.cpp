@@ -169,6 +169,68 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 }
 
 
+void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
+{
+/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	switch(msg->vtol_state)
+	{
+		//navdata_current.demo.ctrl_states = FLY ;
+		case mavros_msgs::ExtendedState::VTOL_STATE_UNDEFINED :
+		{
+			//Etat inconnue
+			ROS_DEBUG("VTOL_STATE_UNDEFINED") ;
+		}
+
+		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_FW :
+		{
+			//Etat transition en avant
+			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_FW") ;
+		}
+
+		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_MC :
+		{
+			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_MC") ;
+		}
+
+		case mavros_msgs::ExtendedState::VTOL_STATE_MC :
+		{
+			ROS_DEBUG("VTOL_STATE_MC") ;
+		}
+
+		case mavros_msgs::ExtendedState::VTOL_STATE_FW :
+		{
+			//Etat en avant
+			ROS_DEBUG("VTOL_STATE_FW") ;
+		}
+	}
+
+	switch(msg->landed_state)
+	{
+		//navdata_current.demo.ctrl_states = LAND ;
+		case mavros_msgs::ExtendedState::LANDED_STATE_UNDEFINED :
+		{
+			//Etat inconnue
+			ROS_DEBUG("LANDED_STATE_UNDEFINED") ;
+		}
+		case mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND :
+		{
+			//etat a terre
+			ROS_DEBUG("LANDED_STATE_ON_GROUND") ;
+		}
+		case mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR :
+		{
+			//...se pose ou décolage
+			ROS_DEBUG("LANDED_STATE_IN_AIR") ;
+		}
+	}
+/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+
+}
+
+
 /*!
  * \brief Put the velocity datas into the navdata
  */
@@ -227,6 +289,9 @@ int main(int argc, char **argv) {
 
 	// Here we receive the velocity
 	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
+
+	//Here we receive state of drone
+	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getState, pn);
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
