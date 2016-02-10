@@ -174,7 +174,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
  */
 void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg) {
 
-	ROS_DEBUG("Entered velocity with (x = %f, y = %f, z = %f)", msg->twist->linear->x, msg->twist->linear->y, msg->twist->linear->y);
+	ROS_DEBUG("Entered velocity with (x = %f, y = %f, z = %f)", msg->twist.linear.x, msg->twist.linear.y, msg->twist.linear.y);
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
 	ros::Subscriber sub_mavros_battery = navdata_node_handle.subscribe("mavros/battery", SUB_BUF_SIZE_BATTERY, &PikopterNavdata::handleBattery, pn);
 
 	// Here we receive the velocity
-	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/global_position/gp_vel", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
+	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
