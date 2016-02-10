@@ -39,6 +39,9 @@
 // 2 spaces
 #define DEMO_LEN NAVDATA_NREADS_INT*(INT_LEN+1)+(NAVDATA_NREADS_FLOAT*FLOAT_LEN+1)+2
 
+// Time to sleep if mavros isn't launched yet
+#define MAVROS_WAIT_TIMEOUT 10000  // In ms
+
 
 /* ##### Specific to navdata ros parameters ##### */
 // Loop rate in hertz

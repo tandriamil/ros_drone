@@ -21,7 +21,7 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 	initNavdata();
 
 	// Ask mavros the rate on which it wants to receive the datas
-	askMavrosRate();
+	askMavrosRate();  // Will wait mavros to be launched before continuing the execution
 
 	// The other attributes got their memory allocated automatically
 }
@@ -46,21 +46,28 @@ void PikopterNavdata::askMavrosRate() {
 
 	// Check that the service does exist
 	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second parameter is whether we print the error or not
-		ROS_ERROR("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable");
-	} else {
-
-		// Create a StreamRate service handler to call the request
-		mavros_msgs::StreamRate sr;
-
-		// TODO: Find the correct options to ask only what we need for the moment
-		sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
-		sr.request.message_rate = (uint16_t)5;
-		sr.request.on_off = (uint8_t)1;
-
-		// Call the service
-		if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
-		else ROS_ERROR("Call on set_stream_rate service failed");
+		ROS_INFO("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable. Maybe mavros isn't launched yet, we'll wait for it.");
 	}
+
+	// We'll wait for it then
+	bool mavros_available = ros::service::waitForService("/mavros/set_stream_rate", MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		delete this;
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	// Create a StreamRate service handler to call the request
+	mavros_msgs::StreamRate sr;
+
+	// TODO: Find the correct options to ask only what we need for the moment
+	sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
+	sr.request.message_rate = (uint16_t)5;
+	sr.request.on_off = (uint8_t)1;
+
+	// Call the service
+	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
+	else ROS_ERROR("Call on set_stream_rate service failed");
 
 }
 
