@@ -266,10 +266,10 @@ int main(int argc, char **argv) {
 	/* ######################### Initialization ######################### */
 
 	// Check the command syntax
-	if (argc != 2) {
-		ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
-		return ERROR_ENCOUNTERED;
-	}
+	// if (argc != 2) {
+	// 	ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
+	// 	return ERROR_ENCOUNTERED;
+	// }
 
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_navdata");
@@ -277,8 +277,22 @@ int main(int argc, char **argv) {
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle navdata_node_handle;
 
+	std::string ip;
+
+
+	navdata_node_handle.getParam("/pikopter_navdata/ip", ip);
+
+	ROS_INFO("IP non convertie : %s" , ip.c_str());
+
+	char* cstr = new char[ip.length() + 1];
+	strcpy(cstr, ip.c_str());
+
+	ROS_INFO("IP convertie : %s" , cstr);
+
 	// Create a pikopter navdata object
-	PikopterNavdata *pn = new PikopterNavdata(argv[1]);
+	PikopterNavdata *pn = new PikopterNavdata(cstr);
+
+	delete [] cstr;
 
 	// Put the rate for this node
 	ros::Rate loop_rate(NAVDATA_LOOP_RATE);
