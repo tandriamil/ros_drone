@@ -168,12 +168,12 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 
 }
 
-
+/***************** Fonction getState a voir ******/
 void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 {
 /* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
-
+ 
 	switch(msg->vtol_state)
 	{
 		navdata_current.demo.ctrl_state = FLY ;
