@@ -45,7 +45,7 @@ PikopterNavdata::~PikopterNavdata() {
 void PikopterNavdata::askMavrosRate() {
 
 	// Check that the service does exist
-	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second parameter is whether we print the error or not
+	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second paramter is whether we print the error or not
 		ROS_INFO("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable. Maybe mavros isn't launched yet, we'll wait for it.");
 	}
 
@@ -247,6 +247,11 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
+
+	// Updatas velocity datas
+	navdata_current.demo.vx = (float32_t)msg->twist.linear.x;
+	navdata_current.demo.vy = (float32_t)msg->twist.linear.y;
+	navdata_current.demo.vz = (float32_t)msg->twist.linear.z;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
