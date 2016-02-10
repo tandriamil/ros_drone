@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 		exit(ERROR_ENCOUNTERED);
 	}
 
-	sleep(3);
+	sleep(5);
 
 	if(ros::service::call("/mavros/set_mode", srvGuided))
 		ROS_INFO("Mode MAV_MODE_GUIDED activated.");
