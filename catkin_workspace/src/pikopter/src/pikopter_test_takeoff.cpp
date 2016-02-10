@@ -54,6 +54,47 @@ int main(int argc, char *argv[]) {
 	srvTakeOffLand.request.altitude = 50;
 	srvArmed.request.value = true;
 
+	ROS_INFO("%s", "Checking for land service");
+	// Check that the take off service does exist
+	if (!ros::service::exists("/mavros/cmd/land", true)) {  // Second parameter is whether we print the error or not
+		ROS_INFO("Land service is not yet available. Maybe mavros isn't launched yet, we'll wait for it.");
+	}
+
+	// We'll wait for it then
+	bool mavros_available = ros::service::waitForService("/mavros/cmd/land", MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	ROS_INFO("%s", "Checking for set_mode service");
+	// Check that the set mode service does exist
+	if (!ros::service::exists("/mavros/set_mode", true)) {  // Second parameter is whether we print the error or not
+		ROS_INFO("Set mode service is not yet available. Maybe mavros isn't launched yet, we'll wait for it.");
+	}
+
+	// We'll wait for it then
+	mavros_available = ros::service::waitForService("/mavros/set_mode", MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	ROS_INFO("%s", "Checking for arming service");
+	// Check that the set mode service does exist
+	if (!ros::service::exists("/mavros/cmd/arming", true)) {  // Second parameter is whether we print the error or not
+		ROS_INFO("Arm service is not yet available. Maybe mavros isn't launched yet, we'll wait for it.");
+	}
+
+	// We'll wait for it then
+	mavros_available = ros::service::waitForService("/mavros/cmd/arming", MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	sleep(5);
+
 	if(ros::service::call("/mavros/set_mode", srvGuided))
 		ROS_INFO("Mode MAV_MODE_GUIDED activated.");
 	else
@@ -74,7 +115,7 @@ int main(int argc, char *argv[]) {
 	msgMove.header.stamp = ros::Time::now();
 	msgMove.twist.linear.x = 10;
 
-	msgMove.twist.angular.x = 10;
+	msgMove.twist.angular.x = 100;
 	msgMove.twist.angular.y = 20;
 	msgMove.twist.angular.z = 30;
 

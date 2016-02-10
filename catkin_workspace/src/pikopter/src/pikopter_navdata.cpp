@@ -21,7 +21,7 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 	initNavdata();
 
 	// Ask mavros the rate on which it wants to receive the datas
-	askMavrosRate();
+	askMavrosRate();  // Will wait mavros to be launched before continuing the execution
 
 	// The other attributes got their memory allocated automatically
 }
@@ -45,22 +45,29 @@ PikopterNavdata::~PikopterNavdata() {
 void PikopterNavdata::askMavrosRate() {
 
 	// Check that the service does exist
-	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second parameter is whether we print the error or not
-		ROS_ERROR("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable");
-	} else {
-
-		// Create a StreamRate service handler to call the request
-		mavros_msgs::StreamRate sr;
-
-		// TODO: Find the correct options to ask only what we need for the moment
-		sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
-		sr.request.message_rate = (uint16_t)5;
-		sr.request.on_off = (uint8_t)1;
-
-		// Call the service
-		if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
-		else ROS_ERROR("Call on set_stream_rate service failed");
+	if (!ros::service::exists("/mavros/set_stream_rate", true)) {  // Second paramter is whether we print the error or not
+		ROS_INFO("Can't put the stream rate for navdatas because /mavros/set_stream_rate service is unavailable. Maybe mavros isn't launched yet, we'll wait for it.");
 	}
+
+	// We'll wait for it then
+	bool mavros_available = ros::service::waitForService("/mavros/set_stream_rate", MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		delete this;
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	// Create a StreamRate service handler to call the request
+	mavros_msgs::StreamRate sr;
+
+	// TODO: Find the correct options to ask only what we need for the moment
+	sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
+	sr.request.message_rate = (uint16_t)5;
+	sr.request.on_off = (uint8_t)1;
+
+	// Call the service
+	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_INFO("Mavros rate asked");
+	else ROS_ERROR("Call on set_stream_rate service failed");
 
 }
 
@@ -260,6 +267,11 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
+	// Updatas velocity datas
+	navdata_current.demo.vx = (float32_t)msg->twist.linear.x;
+	navdata_current.demo.vy = (float32_t)msg->twist.linear.y;
+	navdata_current.demo.vz = (float32_t)msg->twist.linear.z;
+
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 
@@ -278,10 +290,10 @@ int main(int argc, char **argv) {
 	/* ######################### Initialization ######################### */
 
 	// Check the command syntax
-	if (argc != 2) {
-		ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
-		return ERROR_ENCOUNTERED;
-	}
+	// if (argc != 2) {
+	// 	ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
+	// 	return ERROR_ENCOUNTERED;
+	// }
 
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_navdata");
@@ -289,8 +301,22 @@ int main(int argc, char **argv) {
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle navdata_node_handle;
 
+	ros::NodeHandle navdata_private_nh("~");
+
+	std::string ip;
+
+	if(!navdata_private_nh.getParam("ip", ip)) {
+		ROS_FATAL("Missing ip parameter");
+		return ERROR_ENCOUNTERED;
+	}
+
+	char* cstr = new char[ip.length() + 1];
+	strcpy(cstr, ip.c_str());
+
 	// Create a pikopter navdata object
-	PikopterNavdata *pn = new PikopterNavdata(argv[1]);
+	PikopterNavdata *pn = new PikopterNavdata(cstr);
+
+	delete [] cstr;
 
 	// Put the rate for this node
 	ros::Rate loop_rate(NAVDATA_LOOP_RATE);

@@ -53,6 +53,9 @@
 // Max size of an IP adress OR a domain name to get it
 #define MAX_DOMAINE_NAME_SIZE 256
 
+// Time to sleep if mavros isn't launched yet
+#define MAVROS_WAIT_TIMEOUT 10000  // In ms
+
 
 
 /* ################################### Classes ################################### */
