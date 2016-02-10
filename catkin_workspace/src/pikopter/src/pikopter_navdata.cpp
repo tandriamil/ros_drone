@@ -176,10 +176,14 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 
 	switch(msg->vtol_state)
 	{
-		//navdata_current.demo.ctrl_states = FLY ;
+		navdata_current.demo.ctrl_state = FLY ;
+		
 		case mavros_msgs::ExtendedState::VTOL_STATE_UNDEFINED :
 		{
 			//Etat inconnue
+			
+			navdata_current.demo.ctrl_state = DEFAULT ;
+			
 			ROS_DEBUG("VTOL_STATE_UNDEFINED") ;
 		}
 
@@ -189,11 +193,13 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_FW") ;
 		}
 
+		//Etat de transition vers MC
 		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_MC :
 		{
 			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_MC") ;
 		}
 
+		//Etat en MC??
 		case mavros_msgs::ExtendedState::VTOL_STATE_MC :
 		{
 			ROS_DEBUG("VTOL_STATE_MC") ;
@@ -202,32 +208,45 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 		case mavros_msgs::ExtendedState::VTOL_STATE_FW :
 		{
 			//Etat en avant
+			navdata_current.demo.ctrl_state = MOVE ;		
+			
 			ROS_DEBUG("VTOL_STATE_FW") ;
 		}
 	}
 
 	switch(msg->landed_state)
 	{
-		//navdata_current.demo.ctrl_states = LAND ;
+		navdata_current.demo.ctrl_state = LAND ;
+
 		case mavros_msgs::ExtendedState::LANDED_STATE_UNDEFINED :
 		{
 			//Etat inconnue
+
+			navdata_current.demo.ctrl_state = DEFAULT ;
+
 			ROS_DEBUG("LANDED_STATE_UNDEFINED") ;
 		}
+		
 		case mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND :
 		{
-			//etat a terre
+			//etat a terre (TAKEOFF_GROUND)
+
+			navdata_current.demo.ctrl_state = TAKEOFF ;
+			
 			ROS_DEBUG("LANDED_STATE_ON_GROUND") ;
 		}
+		
 		case mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR :
 		{
-			//...se pose ou décolage
+			//...se pose ou décolage (TAKEOFF_AUTO)
+
+			navdata_current.demo.ctrl_state = TAKEOFF ;
+			
 			ROS_DEBUG("LANDED_STATE_IN_AIR") ;
 		}
 	}
 /* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
-
 }
 
 
