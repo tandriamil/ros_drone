@@ -282,17 +282,17 @@ int main(int argc, char **argv) {
 	// Create a node handle (fully initialize ros)
 	ros::NodeHandle navdata_node_handle;
 
+	ros::NodeHandle navdata_private_nh("~");
+
 	std::string ip;
 
-
-	navdata_node_handle.getParam("/pikopter_navdata/ip", ip);
-
-	ROS_INFO("IP non convertie : %s" , ip.c_str());
+	if(!navdata_private_nh.getParam("ip", ip)) {
+		ROS_FATAL("Missing ip parameter");
+		return ERROR_ENCOUNTERED;
+	}
 
 	char* cstr = new char[ip.length() + 1];
 	strcpy(cstr, ip.c_str());
-
-	ROS_INFO("IP convertie : %s" , cstr);
 
 	// Create a pikopter navdata object
 	PikopterNavdata *pn = new PikopterNavdata(cstr);
