@@ -176,27 +176,26 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 }
 
 /***************** Fonction getState a voir ******/
-void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
+void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 {
 /* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
  
+ 	//Pour l'etat en vol
 	switch(msg->vtol_state)
 	{
 		navdata_current.demo.ctrl_state = FLY ;
 		
+		//Etat inconnue 
 		case mavros_msgs::ExtendedState::VTOL_STATE_UNDEFINED :
-		{
-			//Etat inconnue
-			
+		{	
 			navdata_current.demo.ctrl_state = DEFAULT ;
 			
 			ROS_DEBUG("VTOL_STATE_UNDEFINED") ;
 		}
-
+		//Etat transition en avant
 		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_FW :
 		{
-			//Etat transition en avant
 			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_FW") ;
 		}
 
@@ -212,15 +211,16 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 			ROS_DEBUG("VTOL_STATE_MC") ;
 		}
 
+		//Etat en avant
 		case mavros_msgs::ExtendedState::VTOL_STATE_FW :
 		{
-			//Etat en avant
 			navdata_current.demo.ctrl_state = MOVE ;		
 			
 			ROS_DEBUG("VTOL_STATE_FW") ;
 		}
 	}
 
+	//Pour l'etat a terre
 	switch(msg->landed_state)
 	{
 		navdata_current.demo.ctrl_state = LAND ;
@@ -256,6 +256,42 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 	navdata_mutex.unlock();
 }
 
+/*!
+ *	Utilisation de l'etat avec navdata_raw !!!
+ */
+void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
+{
+/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	//Si on est connecter au drone
+	if((bool)msg->connected){
+		//Le mode FLY est OK
+		ROS_DEBUG("MODE FLY : SUCCES") ;
+//		navdata_current.demo.fly_states = FLY_OK ;
+		//Le mode HOVER est OK
+		ROS_DEBUG("MODE HOVER : SUCCES") ;
+//		navdata_current.demo.hover_states = HOVER_OK ;
+		//Le mode MOVE est OK 
+		ROS_DEBUG("MODE MOVE : SUCCES") ;
+//		navdata_current.demo.move_states = GOTO_OK ;
+	}
+	//Sinon
+	else{
+		//Le mode FLY est perdu
+		ROS_DEBUG("MODE FLY : FAIL") ;
+		//navdata_current.demo.fly_states = FLY_LOST_ALT ;
+		//Le mode HOVER est perdu
+		ROS_DEBUG("MODE HOVER : FAIL") ;
+		//navdata_current.demo.hover_states = LOST_COM ;
+		//Le mode MOVE est perdu
+		ROS_DEBUG("MODE MOVE : FAIL") ;
+		//navdata_current.demo.move_states = GOTO_LOST_ALT ;
+	}
+
+/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();	
+}
 
 /*!
  * \brief Put the velocity datas into the navdata
@@ -336,7 +372,11 @@ int main(int argc, char **argv) {
 	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
 
 	//Here we receive state of drone
-	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getState, pn);
+	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
+
+	//Here we receieve general state of drone
+/**** Mettre une tempo importante pour ce topic là ****/
+	ros::Subscriber sub_mavros_state = navdata_node_handle.subscribe("mavros/state", SUB_BUF_SIZE_STATE, &PikopterNavdata::getState, pn) ;
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
