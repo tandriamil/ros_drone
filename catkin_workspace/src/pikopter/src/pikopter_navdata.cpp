@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
 	strcpy(cstr, ip.c_str());
 
 	// Create a pikopter navdata object
-	// TODO: Later, we could choose between normal or demo mode
+	// TODO: Later, we would be abble to choose between normal or demo mode
 	PikopterNavdata *pn = new PikopterNavdata(cstr, true);
 
 	delete [] cstr;
