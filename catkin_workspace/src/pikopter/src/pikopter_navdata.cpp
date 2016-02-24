@@ -225,12 +225,10 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 	{
 		navdata_current.demo.ctrl_state = LAND ;
 
+		//Etat inconnue
 		case mavros_msgs::ExtendedState::LANDED_STATE_UNDEFINED :
 		{
-			//Etat inconnue
-
 			navdata_current.demo.ctrl_state = DEFAULT ;
-
 			ROS_DEBUG("LANDED_STATE_UNDEFINED") ;
 		}
 		
@@ -268,25 +266,19 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 	if((bool)msg->connected){
 		//Le mode FLY est OK
 		ROS_DEBUG("MODE FLY : SUCCES") ;
-//		navdata_current.demo.fly_states = FLY_OK ;
 		//Le mode HOVER est OK
 		ROS_DEBUG("MODE HOVER : SUCCES") ;
-//		navdata_current.demo.hover_states = HOVER_OK ;
 		//Le mode MOVE est OK 
 		ROS_DEBUG("MODE MOVE : SUCCES") ;
-//		navdata_current.demo.move_states = GOTO_OK ;
 	}
 	//Sinon
 	else{
 		//Le mode FLY est perdu
 		ROS_DEBUG("MODE FLY : FAIL") ;
-		//navdata_current.demo.fly_states = FLY_LOST_ALT ;
 		//Le mode HOVER est perdu
 		ROS_DEBUG("MODE HOVER : FAIL") ;
-		//navdata_current.demo.hover_states = LOST_COM ;
 		//Le mode MOVE est perdu
 		ROS_DEBUG("MODE MOVE : FAIL") ;
-		//navdata_current.demo.move_states = GOTO_LOST_ALT ;
 	}
 
 /* ##### Exit Critical Section ##### */
@@ -307,6 +299,11 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 	navdata_current.demo.vx = (float32_t)msg->twist.linear.x;
 	navdata_current.demo.vy = (float32_t)msg->twist.linear.y;
 	navdata_current.demo.vz = (float32_t)msg->twist.linear.z;
+
+	//Update yaw, roll, pitch
+	navdata_current.demo.phi = (float32_t)msg->twist.angular.x ;
+	navdata_current.demo.theta = (float32_t)msg->twist.angular.y ;
+	navdata_current.demo.psi = (float32_t)msg->twist.angular.z ;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
