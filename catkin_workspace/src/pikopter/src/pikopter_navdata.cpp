@@ -4,10 +4,10 @@
 /*!
  * \brief Constructor of PikopterNavdata
  *
- * \param The ip adress on which we create the udp socket
+ * \param ip_adress The ip adress on which we create the udp socket
+ * \param in_demo True if in demo mode, false if not
  */
-
-PikopterNavdata::PikopterNavdata(char *ip_adress) {
+PikopterNavdata::PikopterNavdata(char *ip_adress, bool in_demo) {
 
 	// Open the UDP port for the navadata node
 	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, ip_adress);
@@ -16,6 +16,9 @@ PikopterNavdata::PikopterNavdata(char *ip_adress) {
 		ROS_FATAL("Fatal error code %d", navdata_fd);
 		exit(EXIT_FAILURE);
 	}
+
+	// Put the mode
+	demo_mode = in_demo;
 
 	// Initialise the navdata datas
 	initNavdata();
@@ -36,6 +39,18 @@ PikopterNavdata::~PikopterNavdata() {
 	close(navdata_fd);
 
 	// The other attributes got their memory deallocated automatically
+}
+
+
+/*!
+ * \brief Get the information about the mode used here
+ *
+ * \return True if in demo mode, false if not
+ */
+bool PikopterNavdata::inDemoMode() {
+
+	// Just return the value of the PN
+	this->demo_mode;
 }
 
 
@@ -259,6 +274,10 @@ void PikopterNavdata::getState(const mavros_msgs::ExtendedState::ConstPtr& msg)
 
 /*!
  * \brief Put the velocity datas into the navdata
+ *
+ * \remark The values got from this function are estimated by the drone.
+ *         It could be better to get those values from global_position topics
+ *         which fetch those datas form GPS position
  */
 void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg) {
 
@@ -314,15 +333,19 @@ int main(int argc, char **argv) {
 	strcpy(cstr, ip.c_str());
 
 	// Create a pikopter navdata object
-	PikopterNavdata *pn = new PikopterNavdata(cstr);
+	// TODO: Later, we could choose between normal or demo mode
+	PikopterNavdata *pn = new PikopterNavdata(cstr, true);
 
 	delete [] cstr;
 
-	// Put the rate for this node
-	ros::Rate loop_rate(NAVDATA_LOOP_RATE);
+	// Get the rate for this node in function of the mode
+	int rate;
+	if (pn->inDemoMode())  rate = NAVDATA_DEMO_LOOP_RATE;  // In demo mode
+	else  rate = NAVDATA_LOOP_RATE;  // In normal mode
 
-	// Debug message
-	ROS_INFO("Navdata node initialized with a rate of %u", NAVDATA_LOOP_RATE);
+	// Put this rate
+	ros::Rate loop_rate(rate);
+	ROS_INFO("Navdata node initialized with a rate of %u", rate);
 
 
 	/* ##### All the subscribers to receive datas ##### */
