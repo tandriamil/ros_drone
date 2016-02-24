@@ -43,7 +43,9 @@
 
 /* ##### Specific to navdata ros parameters ##### */
 // Loop rate in hertz
-#define NAVDATA_LOOP_RATE 1  // By the ArDrone doc, normally rate < 5ms, so 200 times per seconds but it's too much
+// For ArDrone, in demo mode it's 15Hz and in normal mode it's 200Hz
+#define NAVDATA_DEMO_LOOP_RATE 15
+#define NAVDATA_LOOP_RATE 200
 
 // Subscribers' buffer size
 #define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
@@ -212,7 +214,7 @@ class PikopterNavdata {
 	public:
 
 		// Public functions
-		PikopterNavdata(char *ip_adress);  // Constructor
+		PikopterNavdata(char *ip_adress, bool in_demo);  // Constructor
 		~PikopterNavdata();  // Destructor
 		void sendNavdata();  // Send the navdata
 		void display();  // Display the current method of the navdata
@@ -221,8 +223,11 @@ class PikopterNavdata {
 		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
 		void handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg);
 		void handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg);
-		void getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg) ;
-		void getState(const mavros_msgs::State::ConstPtr& msg) ;
+		void getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg);
+		void getState(const mavros_msgs::State::ConstPtr& msg);
+
+		// Accessors
+		bool inDemoMode();
 
 	// Private part
 	private:
@@ -235,7 +240,8 @@ class PikopterNavdata {
 		struct sockaddr_in addr_drone_navdata;
 		union navdata_t navdata_current;
 		int navdata_fd;
-		std::mutex navdata_mutex ;
+		bool demo_mode;
+		std::mutex navdata_mutex;
 };
 
 #endif
