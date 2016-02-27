@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
 	mavros_msgs::CommandBool srvArmed;
 	geometry_msgs::TwistStamped msgMove;
 
+
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
 	srvTakeOffLand.request.altitude = 50;
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
 	if (!ros::service::exists("/mavros/set_mode", true)) {  // Second parameter is whether we print the error or not
 		ROS_INFO("Set mode service is not yet available. Maybe mavros isn't launched yet, we'll wait for it.");
 	}
+
 
 	// We'll wait for it then
 	mavros_available = ros::service::waitForService("/mavros/set_mode", MAVROS_WAIT_TIMEOUT);

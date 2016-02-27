@@ -3,7 +3,7 @@
         <!-- example launch script for PX4 based FCU's -->
 
 <!--    <arg name="fcu_url" default="/dev/ttyACM0:57600" /> -->
-        <arg name="fcu_url" default="udp://10.5.5.1:14556@10.5.5.105:14550" />
+        <arg name="fcu_url" default="tcp://10.5.5.105:5762" />
         <arg name="gcs_url" default="" />
         <arg name="tgt_system" default="1" />
         <arg name="tgt_component" default="1" />
