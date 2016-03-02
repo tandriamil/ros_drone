@@ -16,6 +16,13 @@
 
 
 /* Import Headers */
+#include "../include/pikopter/pikopter_common.h"
+#include <mavros_msgs/CommandTOL.h>
+#include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/CommandBool.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <mavros_msgs/State.h>
+
 #include "../include/pikopter/pikopter_cmd.h"
 
 using namespace std;
@@ -39,6 +46,73 @@ typedef struct command {
 
 /* Functions */
 
+ExecuteCommand::ExecuteCommand() {
+	ros::NodeHandle nh;
+	state_sub = nh.subscribe<mavros_msgs::State>
+            ("mavros/state", 10, state_cb);
+    arming_client = nh.serviceClient<mavros_msgs::CommandBool>
+            ("mavros/cmd/arming");
+    set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
+            ("mavros/set_mode");
+    tol_client = nh.serviceClient<mavros_msgs::CommandTOL>
+            ("mavros/cmd/takeoff");
+
+    ROS_INFO("Wait for land service");
+	waitForService("/mavros/cmd/land");
+
+	ROS_INFO("Wait for set_mode service");
+	waitForService("/mavros/set_mode");
+	
+	ROS_INFO("Wait for set_mode service");
+	waitForService("/mavros/cmd/arming");
+}
+
+bool ExecuteCommand::takeoff() {
+	mavros_msgs::SetMode srvGuided;
+	mavros_msgs::CommandTOL srvTakeOffLand;
+	mavros_msgs::CommandBool srvArmed;
+
+	srvGuided.request.custom_mode = "GUIDED";
+	srvGuided.request.base_mode = 0;
+	srvTakeOffLand.request.altitude = 50;
+	srvArmed.request.value = true;
+
+	set_mode_client.call(srvGuided);
+	if (srvGuided.response.success) {
+		ROS_INFO("Guided mode enabled");
+	} else {
+		return false;
+	}
+
+	arming_client.call(srvArmed);
+    if (srvArmed.response.success) {
+    	ROS_INFO("Drone armed");
+    } else {
+		return false;
+	}
+
+    tol_client.call(srvTakeOffLand);
+	if (srvTakeOffLand.response.success) {
+		ROS_INFO("Drone flying");
+	} else {
+		return false;
+	}
+	return true;
+}
+void state_cb(const mavros_msgs::State::ConstPtr& msg){
+    current_state = *msg;
+}
+
+void waitForService(const std::string service) {
+	bool mavros_available = ros::service::waitForService(service, MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		ROS_INFO("Maybe the service you asked does not exist");
+		exit(ERROR_ENCOUNTERED);
+	}
+}
+
+
 /*!
  * \brief Parsing command
  *
@@ -46,7 +120,7 @@ typedef struct command {
  *
  * \return the command
  */
-Command parseCommand(char *buf) {
+Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	Command command;
 	char cmd[PACKET_SIZE];
 	int seq, tcmd, p1, p2, p3, p4, p5;
@@ -83,8 +157,10 @@ Command parseCommand(char *buf) {
 				fprintf(stderr, "%s\n", "DECOLLAGE");
 
 		case 290717696:
-			if(tcmd != ptcmd)
+			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n","ATTERRISSAGE");
+				executeCommand.takeoff();
+			}
 			break;
 
 		case 290717952:
@@ -187,7 +263,7 @@ int main(int argc, char *argv[]) {
 		ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
 		return ERROR_ENCOUNTERED;
 	}
-
+	ExecuteCommand executeCommand;
 	// Create a NodeHandle
 	ros::NodeHandle nodeHandle;
 
@@ -209,7 +285,7 @@ int main(int argc, char *argv[]) {
 		if(ret > 0) {			
 			// Get command
 			printf("%s\n", commandBuffer);
-			command = parseCommand((char *) commandBuffer);
+			command = parseCommand((char *) commandBuffer, executeCommand);
 			
 			if(!command.cmd.empty()) {
 				cout << "Command received : " << command.cmd << "\n";

@@ -25,4 +25,17 @@ class PikopterCmd {
 		int cmd_fd;
 };
 
+class ExecuteCommand {
+	public:
+		ExecuteCommand();
+		bool takeoff();
+
+	private:
+		ros::Subscriber state_sub;
+		ros::ServiceClient arming_client;
+		ros::ServiceClient set_mode_client;
+		ros::ServiceClient tol_client;
+		mavros_msgs::State current_state;
+};
+
 #endif
