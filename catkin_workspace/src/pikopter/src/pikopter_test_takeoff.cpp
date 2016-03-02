@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 	bool takeoff = false;
 	bool land = false;
 
-    while(ros::ok()){
+    /*while(ros::ok()){
         if(current_state.mode != "GUIDED" &&
             (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(srvGuided) &&
@@ -127,71 +127,77 @@ int main(int argc, char *argv[]) {
         rate.sleep();
     }
 
-    return 0;
+    return 0;*/
 
-	// sleep(5);
+	sleep(5);
 
-	// // Set mode to GUIDED
-	// if(ros::service::call("/mavros/set_mode", srvGuided) && srvGuided.response.success) {
-	// 	ROS_INFO("Mode MAV_MODE_GUIDED activated.");
-	// }
+	// Set mode to GUIDED
+	if(ros::service::call("/mavros/set_mode", srvGuided) && srvGuided.response.success) {
+		ROS_INFO("Mode MAV_MODE_GUIDED activated.");
+	}
 
-	// else {
-	// 	ROS_ERROR("Problem occured on calling set_mode service");
-	// 	exit(ERROR_ENCOUNTERED);
-	// }
+	else {
+		ROS_ERROR("Problem occured on calling set_mode service");
+		exit(ERROR_ENCOUNTERED);
+	}
 
-	// // Arming motors
-	// if(ros::service::call("/mavros/cmd/arming", srvArmed) && srvArmed.response.success) {
-	// 	ROS_INFO("Arming command called.");
-	// }
+	// Wait a little before arming
+	sleep(1);
 
-	// else {
-	// 	ROS_ERROR("Problem occured on calling arming command");
-	// 	exit(ERROR_ENCOUNTERED);
-	// }
+	// Arming motors
+	if(ros::service::call("/mavros/cmd/arming", srvArmed) && srvArmed.response.success) {
+		ROS_INFO("Arming command called.");
+	}
 
-	// // Calling takeoff service
-	// if(ros::service::call("/mavros/cmd/takeoff", srvTakeOffLand) && srvTakeOffLand.response.success) {
-	// 	ROS_INFO("Takeoff called");
-	// }
+	else {
+		ROS_ERROR("Problem occured on calling arming command");
+		exit(ERROR_ENCOUNTERED);
+	}
 
-	// else {
-	// 	ROS_ERROR("Problem occured on calling takeoff command");
-	// 	exit(ERROR_ENCOUNTERED);
-	// }
+	// Wait a little before taking off (need to warn everyone aroun!)
+	sleep(2);
 
-	// sleep(5);
+	// Calling takeoff service
+	if(ros::service::call("/mavros/cmd/takeoff", srvTakeOffLand) && srvTakeOffLand.response.success) {
+		ROS_INFO("Takeoff called");
+	}
+
+	else {
+		ROS_ERROR("Problem occured on calling takeoff command");
+		exit(ERROR_ENCOUNTERED);
+	}
+
+	sleep(5);
+
+	msgMove.header.stamp = ros::Time::now();
+	msgMove.twist.linear.x = 10;
+
+	msgMove.twist.angular.x = 100;
+	msgMove.twist.angular.y = 20;
+	msgMove.twist.angular.z = 30;
+
+	velocity_pub.publish(msgMove);
+
+	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
+	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
+
+	// Drone will move during 15 seconds
+	sleep(15);
+
+	msgMove.header.stamp = ros::Time::now();
+	msgMove.twist.linear.x = 0;
+	msgMove.twist.angular.z = 0;
+
+	velocity_pub.publish(msgMove);
 	
-	// msgMove.header.stamp = ros::Time::now();
-	// msgMove.twist.linear.x = 10;
+	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
+	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
 
-	// msgMove.twist.angular.x = 100;
-	// msgMove.twist.angular.y = 20;
-	// msgMove.twist.angular.z = 30;
+	sleep(5);
 
-	// velocity_pub.publish(msgMove);
-
-	// ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
-	// ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
-
-	// // Drone will move during 15 seconds
-	// sleep(15);
-
-	// msgMove.header.stamp = ros::Time::now();
-	// msgMove.twist.linear.x = 0;
-	// msgMove.twist.angular.z = 0;
-
-	// velocity_pub.publish(msgMove);
-	
-	// ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
-	// ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
-
-	// sleep(5);
-
-	// if(ros::service::call("/mavros/cmd/land", srvTakeOffLand))
-	// 	ROS_INFO("Land called");
-	// else
-	// 	ROS_ERROR("Problem occured on calling land command");
-	// return 0;
+	if(ros::service::call("/mavros/cmd/land", srvTakeOffLand))
+		ROS_INFO("Land called");
+	else
+		ROS_ERROR("Problem occured on calling land command");
+	return 0;
 }

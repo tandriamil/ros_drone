@@ -88,12 +88,31 @@ void PikopterNavdata::askMavrosRate() {
 
 
 /*!
+ * \brief Increment the sequence number of the navdata packet
+ */
+void PikopterNavdata::incrementSequenceNumber() {
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Increment the sequence number
+	navdata_current.demo.sequence++;
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+
+}
+
+
+/*!
  * \brief Init the navdata buffer
  */
 void PikopterNavdata::initNavdata() {
 
 	// We fill the current navdata
 	navdata_current.demo.tag = TAG_DEMO;
+	//navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;  // Not done into pikopter server
+	//navdata_current.demo.size = PACKET_SIZE;  // Not initialized in the pikopter server
 	navdata_current.demo.vbat_flying_percentage = DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE;
 	navdata_current.demo.altitude = DEFAULT_NAVDATA_DEMO_ALTITUDE;
 	navdata_current.demo.theta = DEFAULT_NAVDATA_DEMO_THETA;
@@ -102,6 +121,10 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vx = DEFAULT_NAVDATA_DEMO_VX;
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
+
+	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION ;
+	navdata_current.demo.ctrl_state = DEFAULT ;
+	//navdata_current.demo.ardrone_state =  //Not initialized in the pikopter
 
 	ROS_INFO("Navdata demo datas initialized to default values");
 
@@ -113,17 +136,28 @@ void PikopterNavdata::initNavdata() {
  */
 void PikopterNavdata::sendNavdata() {
 
+	// Temporary buffer to send the navdata
+	unsigned char tmp_buff[PACKET_SIZE];
+
+
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
-	// Try to send the navdata
-	ssize_t sent_size = sendto(navdata_fd, (unsigned char *)&navdata_current, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
+	// Copy the content of the navdata buffer
+	memcpy((void *)&navdata_current, tmp_buff, PACKET_SIZE);
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 
+
+	// Try to send the navdata
+	ssize_t sent_size = sendto(navdata_fd, tmp_buff, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
+
 	// Display error if there's one
 	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work properly");
+
+	// Increment the sequence number
+	//incrementSequenceNumber();  // Not done into pikopter server
 
 }
 
@@ -278,13 +312,14 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 	navdata_mutex.lock();
 
 	//Si on est connecter au drone
-	if((bool)msg->connected){
+	if(msg->connected){
 		//Le mode FLY est OK
 		ROS_DEBUG("MODE FLY : SUCCES") ;
 		//Le mode HOVER est OK
 		ROS_DEBUG("MODE HOVER : SUCCES") ;
 		//Le mode MOVE est OK 
 		ROS_DEBUG("MODE MOVE : SUCCES") ;
+			//navdata_current.demo.ardrone_state = ... ;
 	}
 	//Sinon
 	else{
@@ -294,6 +329,7 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 		ROS_DEBUG("MODE HOVER : FAIL") ;
 		//Le mode MOVE est perdu
 		ROS_DEBUG("MODE MOVE : FAIL") ;
+			//navdata_current.demo.ardrone_state = ... ;
 	}
 
 /* ##### Exit Critical Section ##### */
@@ -340,12 +376,6 @@ int main(int argc, char **argv) {
 
 
 	/* ######################### Initialization ######################### */
-
-	// Check the command syntax
-	// if (argc != 2) {
-	// 	ROS_FATAL("Command syntax is: \trosrun pikopter pikopter_navdata \"ip_address\"");
-	// 	return ERROR_ENCOUNTERED;
-	// }
 
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_navdata");

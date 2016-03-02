@@ -2,6 +2,7 @@ clean_libraries.sh
 build
 
 src/CMakeLists.txt
+src/pikopter/CMakeLists.txt
 .catkin_tools
 
 devel/.catkin
@@ -11,5 +12,6 @@ devel/setup.sh
 devel/share/ros/cmake/rosConfig.cmake
 devel/.rosinstall
 devel/lib/ros/cmd
+
 CMakeCache.txt
 CMakeFiles
