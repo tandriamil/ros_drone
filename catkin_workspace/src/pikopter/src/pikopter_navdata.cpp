@@ -111,7 +111,7 @@ void PikopterNavdata::initNavdata() {
 
 	// We fill the current navdata
 	navdata_current.demo.tag = TAG_DEMO;
-	navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;
+	//navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;  // Not done into pikopter server
 	//navdata_current.demo.size = PACKET_SIZE;  // Not initialized in the pikopter server
 	navdata_current.demo.vbat_flying_percentage = DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE;
 	navdata_current.demo.altitude = DEFAULT_NAVDATA_DEMO_ALTITUDE;
@@ -153,7 +153,7 @@ void PikopterNavdata::sendNavdata() {
 	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work properly");
 
 	// Increment the sequence number
-	incrementSequenceNumber();
+	//incrementSequenceNumber();  // Not done into pikopter server
 
 }
 
