@@ -70,7 +70,7 @@
 #define DEFAULT_NAVDATA_DEMO_VY 0
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 
-
+#define DEFAULT_NAVDATA_DEMO_VISION false
 
 /* ################################### TYPE DEF ################################### */
 

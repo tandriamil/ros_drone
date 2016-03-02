@@ -122,6 +122,10 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 
+	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION ;
+	navdata_current.demo.ctrl_state = DEFAULT ;
+	//navdata_current.demo.ardrone_state =  //Not initialized in the pikopter
+
 	ROS_INFO("Navdata demo datas initialized to default values");
 
 }
@@ -308,13 +312,14 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 	navdata_mutex.lock();
 
 	//Si on est connecter au drone
-	if((bool)msg->connected){
+	if(msg->connected){
 		//Le mode FLY est OK
 		ROS_DEBUG("MODE FLY : SUCCES") ;
 		//Le mode HOVER est OK
 		ROS_DEBUG("MODE HOVER : SUCCES") ;
 		//Le mode MOVE est OK 
 		ROS_DEBUG("MODE MOVE : SUCCES") ;
+			//navdata_current.demo.ardrone_state = ... ;
 	}
 	//Sinon
 	else{
@@ -324,6 +329,7 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 		ROS_DEBUG("MODE HOVER : FAIL") ;
 		//Le mode MOVE est perdu
 		ROS_DEBUG("MODE MOVE : FAIL") ;
+			//navdata_current.demo.ardrone_state = ... ;
 	}
 
 /* ##### Exit Critical Section ##### */
