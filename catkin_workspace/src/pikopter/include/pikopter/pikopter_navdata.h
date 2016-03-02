@@ -57,10 +57,10 @@
 
 /* ##### Specific to navdata (new constants) ##### */
 // The value of the battery percentage
-//#define BATTERY_PERCENTAGE 100  // 1 => Give 0.05, 100 => Give 5%
 #define BATTERY_PERCENTAGE 1000  // 1 => Give same, 1000 => To put V to mV
 
 // Default values of the navdata demo buffer
+#define DEFAULT_NAVDATA_DEMO_SEQUENCE 1
 #define DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE 100
 #define DEFAULT_NAVDATA_DEMO_ALTITUDE 0
 #define DEFAULT_NAVDATA_DEMO_THETA 0
@@ -235,6 +235,7 @@ class PikopterNavdata {
 		// Private functions
 		void initNavdata();
 		void askMavrosRate();
+		void incrementSequenceNumber();
 
 		// Private attributes
 		struct sockaddr_in addr_drone_navdata;
