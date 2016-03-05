@@ -29,6 +29,13 @@ class ExecuteCommand {
 	public:
 		ExecuteCommand();
 		bool takeoff();
+		bool land();
+		bool forward();
+		bool backward();
+		bool down();
+		bool up();
+		bool left();
+		bool right();
 
 	private:
 		ros::Subscriber state_sub;

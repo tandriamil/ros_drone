@@ -115,6 +115,57 @@ bool ExecuteCommand::takeoff() {
 	return true;
 }
 
+bool ExecuteCommand::land() {
+	mavros_msgs::SetMode srvGuided;
+	mavros_msgs::CommandTOL srvTakeOffLand;
+	mavros_msgs::CommandBool srvArmed;
+
+	srvGuided.request.custom_mode = "GUIDED";
+	srvGuided.request.base_mode = 0;
+	srvTakeOffLand.request.altitude = 0;
+	srvArmed.request.value = true;
+
+	set_mode_client.call(srvGuided);
+	if (srvGuided.response.success) {
+		ROS_INFO("Guided mode enabled");
+	} else {
+		return false;
+	}
+
+    tol_client.call(srvTakeOffLand);
+	if (srvTakeOffLand.response.success) {
+		ROS_INFO("Drone lands");
+	} else {
+		return false;
+	}
+	return true;
+}
+
+bool ExecuteCommand::forward() {
+	return false;
+}
+
+bool ExecuteCommand::backward() {
+	return false;
+}
+
+bool ExecuteCommand::down() {
+	return false;
+}
+
+bool ExecuteCommand::up() {
+	return false;
+}
+
+bool ExecuteCommand::left() {
+	return false;
+}
+
+bool ExecuteCommand::right() {
+	return false;
+}
+
+
 
 /*!
  * \brief Parsing command
@@ -165,6 +216,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 		case 290717696:
 			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n","ATTERRISSAGE");
+				executeCommand.land();
 			}
 			break;
 
