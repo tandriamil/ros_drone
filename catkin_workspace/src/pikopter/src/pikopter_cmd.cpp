@@ -46,6 +46,21 @@ typedef struct command {
 
 /* Functions */
 
+mavros_msgs::State current_state;
+
+void state_cb(const mavros_msgs::State::ConstPtr& msg){
+    current_state = *msg;
+}
+
+void waitForService(const std::string service) {
+	bool mavros_available = ros::service::waitForService(service, MAVROS_WAIT_TIMEOUT);
+	if (!mavros_available) {
+		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
+		ROS_INFO("Maybe the service you asked does not exist");
+		exit(ERROR_ENCOUNTERED);
+	}
+}
+
 ExecuteCommand::ExecuteCommand() {
 	ros::NodeHandle nh;
 	state_sub = nh.subscribe<mavros_msgs::State>
@@ -99,18 +114,6 @@ bool ExecuteCommand::takeoff() {
 	}
 	return true;
 }
-void state_cb(const mavros_msgs::State::ConstPtr& msg){
-    current_state = *msg;
-}
-
-void waitForService(const std::string service) {
-	bool mavros_available = ros::service::waitForService(service, MAVROS_WAIT_TIMEOUT);
-	if (!mavros_available) {
-		ROS_FATAL("Mavros not launched, timeout of %dms reached, exiting...", MAVROS_WAIT_TIMEOUT);
-		ROS_INFO("Maybe the service you asked does not exist");
-		exit(ERROR_ENCOUNTERED);
-	}
-}
 
 
 /*!
@@ -153,22 +156,26 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	else if(sscanf(buf, "AT*REF=%d, %d", &seq, &tcmd) == 2) {
 		switch(tcmd) {
 		case 290718208:
-			if(tcmd != ptcmd)
+			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n", "DECOLLAGE");
+				executeCommand.takeoff();
+			}
+			break;
 
 		case 290717696:
 			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n","ATTERRISSAGE");
-				executeCommand.takeoff();
 			}
 			break;
 
 		case 290717952:
 			if(tcmd != ptcmd)
 				fprintf(stderr, "%s\n","EMERGENCY");
+			break;
 
 		default:
 			fprintf(stderr, "%s\n","UNKNOWN");
+			break;
 		}
 		command.cmd = "AT*REF";
 	}
@@ -229,6 +236,22 @@ int main(int argc, char *argv[]) {
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_cmd");
 
+	// Create a node handle (fully initialize ros)
+	ros::NodeHandle cmd_node_handle;
+
+	ros::NodeHandle cmd_private_nh("~");
+
+	std::string ip;
+
+	if(!cmd_private_nh.getParam("ip", ip)) {
+		ROS_FATAL("Missing ip parameter");
+		return ERROR_ENCOUNTERED;
+	}
+
+	char* cstr = new char[ip.length() + 1];
+	strcpy(cstr, ip.c_str());
+
+
 	ros::start();
 
 	// Instance of PikopterCmd class
@@ -245,9 +268,11 @@ int main(int argc, char *argv[]) {
   	tv.tv_usec = 100000; // 100ms
 
   	Command command;
+
+  	ROS_INFO("Adresse ip : %s", cstr);
 	
 	// Open the UDP port for the cmd node
-	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &addr_drone, argv[1]);
+	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &addr_drone, cstr);
 
   	if (setsockopt(comfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
   		ROS_ERROR("%s", "Error timeout");
@@ -259,16 +284,19 @@ int main(int argc, char *argv[]) {
   		ROS_ERROR("%s", "sendto()");
   	}
 
-	if(argc < 2) {
-		ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
-		return ERROR_ENCOUNTERED;
-	}
+	// if(argc < 2) {
+	// 	ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
+	// 	return ERROR_ENCOUNTERED;
+	// }
 	ExecuteCommand executeCommand;
-	// Create a NodeHandle
-	ros::NodeHandle nodeHandle;
+	
+	// // Create a NodeHandle
+	// ros::NodeHandle nodeHandle;
 
-	// The first argument is the IP address of the Raspberry PI
-	STATION_IP = argv[1];
+	// // The first argument is the IP address of the Raspberry PI
+	// STATION_IP = cstr;
+
+	delete [] cstr;
 
 	// ROS LOOP
 	while(ros::ok()) {
