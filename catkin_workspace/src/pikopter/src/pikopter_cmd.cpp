@@ -235,18 +235,30 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	else if(sscanf(buf, "AT*PCMD=%d, %d, %d, %d, %d, %d", &seq, &p1, &p2, &p3, &p4, &p5) == 6) {
 		if((p1 != pp1) || (p2 != pp2) || (p3 != pp3) || (p4 != pp4) || (p5 != pp5)) {
 			if(p1 || p2 || p3 || p4 || p5) {
-				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5)
+				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5){
 					fprintf(stderr, "%s\n","FORWARD");
-				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5)
+					executeCommand.forward();
+				}
+				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5) {
 					fprintf(stderr, "%s\n","BACKWARD");
-				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5)
+					executeCommand.backward();
+				}
+				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5) {
 					fprintf(stderr, "%s\n","DOWN");
-				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5)
+					executeCommand.down();
+				}
+				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5) {
 					fprintf(stderr, "%s\n","UP");
-				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0))
+					executeCommand.up();
+				}
+				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0)) {
 					fprintf(stderr, "%s\n","LEFT");
-				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0))
+					executeCommand.left();
+				}
+				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
+					executeCommand.right();
+				}
 				else {
 					fprintf(stderr,"received PCMD: %d,%d,%d,%d,%d,%d\n",seq,p1,p2,p3,p4,p5);
 				}
