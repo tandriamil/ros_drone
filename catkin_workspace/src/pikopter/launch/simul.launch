@@ -1,0 +1,39 @@
+<launch>
+
+	<!-- To launch this script, use the command
+		roslaunch pikopter simul.launch client_ip:=`echo $SSH_CLIENT | awk '{ print $1}'`
+	-->
+
+	<!-- Global arguments -->
+	<arg name="client_ip" default="" />
+	<arg name="fcu_url" default="tcp://$(arg client_ip):5760" />
+	<!-- <arg name="fcu_url" default="/dev/ttyACM0:57600" /> -->
+	<!-- <arg name="fcu_url" default="udp://10.5.5.1:15550@10.5.5.105" /> -->
+	<!-- <arg name="fcu_url" default="udp://10.5.5.1:5760@$(arg client_ip):5762" /> -->
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="1" />
+	<arg name="log_output" default="screen" />
+
+	<!-- Mavros include -->
+	<include file="$(find mavros)/launch/node.launch">
+			<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+			<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+			<arg name="fcu_url" value="$(arg fcu_url)" />
+			<arg name="gcs_url" value="$(arg gcs_url)" />
+			<arg name="tgt_system" value="$(arg tgt_system)" />
+			<arg name="tgt_component" value="$(arg tgt_component)" />
+			<arg name="log_output" value="$(arg log_output)" />
+	</include>
+
+	<!-- Our nodes -->
+	<node pkg="pikopter" type="pikopter_navdata" name="pikopter_navdata" output="screen">
+		<param name="ip" type="str" value="$(arg client_ip)" />
+	</node>
+
+	<node pkg="pikopter" type="pikopter_cmd" name="pikopter_cmd" output="screen">
+		<param name="ip" type="str" value="$(arg client_ip)" />
+	</node>
+
+</launch>
