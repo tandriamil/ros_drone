@@ -50,7 +50,7 @@ PikopterNavdata::~PikopterNavdata() {
 bool PikopterNavdata::inDemoMode() {
 
 	// Just return the value of the PN
-	this->demo_mode;
+	return demo_mode;
 }
 
 
@@ -144,7 +144,7 @@ void PikopterNavdata::sendNavdata() {
 	navdata_mutex.lock();
 
 	// Copy the content of the navdata buffer
-	memcpy((void *)&navdata_current, tmp_buff, PACKET_SIZE);
+	memcpy(tmp_buff, (void *)&navdata_current, PACKET_SIZE);
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -403,8 +403,8 @@ int main(int argc, char **argv) {
 
 	// Get the rate for this node in function of the mode
 	int rate;
-	if (pn->inDemoMode())  rate = NAVDATA_DEMO_LOOP_RATE;  // In demo mode
-	else  rate = NAVDATA_LOOP_RATE;  // In normal mode
+	if (pn->inDemoMode()) rate = NAVDATA_DEMO_LOOP_RATE;  // In demo mode
+	else rate = NAVDATA_LOOP_RATE;  // In normal mode
 
 	// Put this rate
 	ros::Rate loop_rate(rate);
@@ -447,7 +447,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("Exited the ros::ok() loop of navdata node. Goodbye!");
 
 	// Destroy the PikopterNavdata object before leaving the program
-	//delete pn;
+	delete pn;
 
 	// Return the correct end status
 	return NO_ERROR_ENCOUNTERED;
