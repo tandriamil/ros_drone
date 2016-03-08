@@ -80,6 +80,59 @@ ExecuteCommand::ExecuteCommand() {
 	
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/cmd/arming");
+
+	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
+}
+
+float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
+	float* rate;
+	switch(*speed) {
+		case 1028443341 : 
+			*rate = 0.05;
+			break;
+		case 1036831949 :
+			*rate = 0.1;
+			break;
+		case 1045220557 :
+			*rate = 0.2;
+			break;
+		case 1048576000 :
+			*rate = 0.25;
+			break;
+		case 1056964608 :
+			*rate = 0.5;
+			break;
+		case 1061158912 :
+			*rate = 0.75;
+			break;
+		case 1065353216 :
+			*rate = 1.0;
+			break;
+		case -1119040307 :
+			*rate = -0.05;
+			break;
+		case -1110651699 :
+			*rate = -0.1;
+			break;
+		case -1102263091 :
+			*rate = -0.2;
+			break;
+		case -1098907648 :
+			*rate = -0.25;
+			break;
+		case -1090519040 :
+			*rate = -0.5;
+			break;
+		case -1086324736 :
+			*rate = -0.75;
+			break;
+		case -1082130432 :
+			*rate = -1.0;
+			break;
+		default :
+			break;
+	}
+	return rate;
 }
 
 bool ExecuteCommand::takeoff() {
@@ -141,11 +194,14 @@ bool ExecuteCommand::land() {
 	return true;
 }
 
-bool ExecuteCommand::forward() {
-	return false;
+void ExecuteCommand::forward(int* accel) {
+	float* rate;
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.x = *rate * 10;
 }
 
-bool ExecuteCommand::backward() {
+bool ExecuteCommand::backward(float accel) {
 	return false;
 }
 
@@ -238,7 +294,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 			if(p1 || p2 || p3 || p4 || p5) {
 				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5){
 					fprintf(stderr, "%s\n","FORWARD");
-					executeCommand.forward();
+					executeCommand.forward(p3);
 				}
 				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5) {
 					fprintf(stderr, "%s\n","BACKWARD");
@@ -305,6 +361,8 @@ int main(int argc, char *argv[]) {
 	ros::NodeHandle cmd_node_handle;
 
 	ros::NodeHandle cmd_private_nh("~");
+
+	//ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 
 	std::string ip;
 
@@ -421,3 +479,12 @@ int main(int argc, char *argv[]) {
 	ros::shutdown();
 	return NO_ERROR_ENCOUNTERED;
 }
+
+/*
+
+ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
+geometry_msgs::TwistStamped msgMove;
+msgMove.twist.linear.x = 10;
+velocity_pub.publish(msgMove);
+
+*/

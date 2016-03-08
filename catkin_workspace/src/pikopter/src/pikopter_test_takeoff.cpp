@@ -170,16 +170,12 @@ int main(int argc, char *argv[]) {
 	sleep(5);
 
 	msgMove.header.stamp = ros::Time::now();
-	msgMove.twist.linear.x = 10;
-
-	msgMove.twist.angular.x = 100;
-	msgMove.twist.angular.y = 20;
-	msgMove.twist.angular.z = 30;
+	msgMove.twist.linear.x = -10;
 
 	velocity_pub.publish(msgMove);
 
 	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
-	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
+	// ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
 
 	// Drone will move during 15 seconds
 	sleep(15);

@@ -1,9 +1,9 @@
 <launch>
-        <include file="$(find pikopter)/launch/105.launch"/>
+        <include file="$(find pikopter)/launch/105.launch" />
         <node pkg="pikopter" type="pikopter_navdata" name="pikopter_navdata" output="screen" launch-prefix="gdb -ex run --args">
         	<param name="ip" type="str" value="10.5.5.105" />
        	</node>
-        <node pkg="pikopter" type="pikopter_cmd" name="pikopter_cmd" output="screen">
-        	<param name="ip" type="str" value="10.5.5.105" />
-       	</node>
+        <node pkg="pikopter" type="pikopter_test_takeoff" name="pikopter_test_takeoff" output="screen" />
+        	<!-- <param name="ip" type="str" value="10.5.5.105" />
+       	</node> -->
 </launch>

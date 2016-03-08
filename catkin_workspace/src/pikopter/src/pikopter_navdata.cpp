@@ -149,9 +149,9 @@ void PikopterNavdata::sendNavdata() {
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 
-
 	// Try to send the navdata
 	ssize_t sent_size = sendto(navdata_fd, tmp_buff, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
+
 
 	// Display error if there's one
 	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work properly");
@@ -447,7 +447,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("Exited the ros::ok() loop of navdata node. Goodbye!");
 
 	// Destroy the PikopterNavdata object before leaving the program
-	delete pn;
+	//delete pn;
 
 	// Return the correct end status
 	return NO_ERROR_ENCOUNTERED;

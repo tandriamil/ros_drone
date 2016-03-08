@@ -30,18 +30,21 @@ class ExecuteCommand {
 		ExecuteCommand();
 		bool takeoff();
 		bool land();
-		bool forward();
-		bool backward();
+		bool forward(float accel);
+		bool backward(float accel);
 		bool down();
 		bool up();
 		bool left();
 		bool right();
+		float* convertSpeedARDroneToRate(int* speed);
 
 	private:
 		ros::Subscriber state_sub;
 		ros::ServiceClient arming_client;
 		ros::ServiceClient set_mode_client;
 		ros::ServiceClient tol_client;
+		ros::Publisher velocity_pub;
+		geometry_msgs::TwistStamped msgMove;
 };
 
 #endif
