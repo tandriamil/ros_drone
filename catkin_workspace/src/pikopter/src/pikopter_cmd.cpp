@@ -29,9 +29,10 @@ using namespace std;
 
 
 /* Declarations */
-char *STATION_IP = NULL;
+//char *STATION_IP = NULL;
 static struct sockaddr_in addr_drone;
 int comfd = 0; // in read mode -- receive command
+mavros_msgs::State current_state;
 
 typedef struct command {
 	string cmd;
@@ -44,9 +45,8 @@ typedef struct command {
 	int param5;
 } Command;
 
-/* Functions */
 
-mavros_msgs::State current_state;
+/* Functions */
 
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
@@ -163,6 +163,7 @@ bool ExecuteCommand::left() {
 
 bool ExecuteCommand::right() {
 	return false;
+	
 }
 
 
@@ -315,7 +316,6 @@ int main(int argc, char *argv[]) {
 	char* cstr = new char[ip.length() + 1];
 	strcpy(cstr, ip.c_str());
 
-
 	ros::start();
 
 	// Instance of PikopterCmd class
@@ -348,17 +348,14 @@ int main(int argc, char *argv[]) {
   		ROS_ERROR("%s", "sendto()");
   	}
 
+
+  	/* This test is no more used while we use file .launch to launch this node */
 	// if(argc < 2) {
 	// 	ROS_FATAL("No IP address\n use: %s \"ip_address\"\n", argv[0]);
 	// 	return ERROR_ENCOUNTERED;
 	// }
-	ExecuteCommand executeCommand;
-	
-	// // Create a NodeHandle
-	// ros::NodeHandle nodeHandle;
 
-	// // The first argument is the IP address of the Raspberry PI
-	// STATION_IP = cstr;
+	ExecuteCommand executeCommand;
 
 	delete [] cstr;
 
