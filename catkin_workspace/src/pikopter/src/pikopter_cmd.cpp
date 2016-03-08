@@ -52,6 +52,10 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
+/**
+ * Wait for any custom or mavros service passed in parameter during a fixed timeout.
+ *
+ */
 void waitForService(const std::string service) {
 	bool mavros_available = ros::service::waitForService(service, MAVROS_WAIT_TIMEOUT);
 	if (!mavros_available) {
@@ -61,6 +65,12 @@ void waitForService(const std::string service) {
 	}
 }
 
+/**
+ * Constructor
+ * Initialize all mavros services used.
+ * Wait for all service to be ready.
+ * NodeHandle advertising for all topics used.
+ */
 ExecuteCommand::ExecuteCommand() {
 	ros::NodeHandle nh;
 	state_sub = nh.subscribe<mavros_msgs::State>
@@ -84,6 +94,12 @@ ExecuteCommand::ExecuteCommand() {
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 }
 
+/**
+ * Convert int sent by Jakopter to a rate.
+ * This int is received for forward and backward movement.
+ * If the rate is positive it is a forward.
+ * Otherwise it is a backward.
+ */
 float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
 	float* rate;
 	switch(*speed) {
@@ -135,6 +151,14 @@ float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
 	return rate;
 }
 
+/**
+ * Takeoff command.
+ * First, it will change mode to GUIDED mode.
+ * Then it will arm the wehicle.
+ * By default the altitude reached after taking off is 50 (meters).
+ * If change mode or arming vehicle failed it will return false.
+ * Otherwise if the vehicle has taken off it will return true.
+ */
 bool ExecuteCommand::takeoff() {
 	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
@@ -168,6 +192,13 @@ bool ExecuteCommand::takeoff() {
 	return true;
 }
 
+/**
+ * Land command.
+ * First, it will change mode to GUIDED mode if it's not the case.
+ * If change mode it will return false.
+ * Otherwise if the vehicle has landed it will return true.
+
+ */
 bool ExecuteCommand::land() {
 	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
@@ -194,15 +225,32 @@ bool ExecuteCommand::land() {
 	return true;
 }
 
+/**
+ * Forward command.
+ * Given an int corresponding to forward/backaward movement (sent by Jakopter), convert this int to a rate.
+ * With this rate we multiply by 10 so the maximum forward movement that we can received is 10 meters (1.0 * 10).
+ * The minimum is 1 meter (0.1 * 10)
+ */
 void ExecuteCommand::forward(int* accel) {
 	float* rate;
 
 	rate = convertSpeedARDroneToRate(accel);
 	msgMove.twist.linear.x = *rate * 10;
+	velocity_pub.publish(msgMove);
 }
 
-bool ExecuteCommand::backward(float accel) {
-	return false;
+/**
+ * Backward command.
+ * Given an int corresponding to forward/backward movement (sent by Jakopter), convert this int to a rate.
+ * With this rate we multiply by 10 so the maximum backward movement that we can received is 10 meters (-1.0 * 10).
+ * The minimum is 1 meter (-0.1 * 10)
+ */
+void ExecuteCommand::backward(int* accel) {
+	float* rate;
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.x = *rate * 10;
+	velocity_pub.publish(msgMove);
 }
 
 bool ExecuteCommand::down() {
@@ -294,11 +342,11 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 			if(p1 || p2 || p3 || p4 || p5) {
 				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5){
 					fprintf(stderr, "%s\n","FORWARD");
-					executeCommand.forward(p3);
+					executeCommand.forward(&p3);
 				}
 				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5) {
 					fprintf(stderr, "%s\n","BACKWARD");
-					executeCommand.backward();
+					executeCommand.backward(&p3);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5) {
 					fprintf(stderr, "%s\n","DOWN");
@@ -480,11 +528,3 @@ int main(int argc, char *argv[]) {
 	return NO_ERROR_ENCOUNTERED;
 }
 
-/*
-
-ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
-geometry_msgs::TwistStamped msgMove;
-msgMove.twist.linear.x = 10;
-velocity_pub.publish(msgMove);
-
-*/

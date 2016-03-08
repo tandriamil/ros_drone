@@ -30,8 +30,8 @@ class ExecuteCommand {
 		ExecuteCommand();
 		bool takeoff();
 		bool land();
-		bool forward(float accel);
-		bool backward(float accel);
+		void forward(int* accel);
+		void backward(int* accel);
 		bool down();
 		bool up();
 		bool left();
