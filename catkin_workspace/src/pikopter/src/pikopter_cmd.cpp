@@ -79,17 +79,25 @@ ExecuteCommand::ExecuteCommand() {
             ("mavros/cmd/arming");
     set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("mavros/set_mode");
-    tol_client = nh.serviceClient<mavros_msgs::CommandTOL>
+    takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>
             ("mavros/cmd/takeoff");
+    land_client = nh.serviceClient<mavros_msgs::CommandTOL>
+    		("mavros/cmd/land");
+
 
     ROS_INFO("Wait for land service");
 	waitForService("/mavros/cmd/land");
+
+	ROS_INFO("Wait for takeoff service");
+	waitForService("/mavros/cmd/takeoff");
 
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/set_mode");
 	
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/cmd/arming");
+
+
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 }
@@ -164,6 +172,7 @@ float* ExecuteCommand::getCurrentAltitude() {
  * Otherwise if the vehicle has taken off it will return true.
  */
 bool ExecuteCommand::takeoff() {
+	ROS_INFO("Takeoff asked");
 	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
 	mavros_msgs::CommandBool srvArmed;
@@ -177,6 +186,7 @@ bool ExecuteCommand::takeoff() {
 	if (srvGuided.response.success) {
 		ROS_INFO("Guided mode enabled");
 	} else {
+		ROS_ERROR("Unable to set mode to GUIDED");
 		return false;
 	}
 
@@ -184,13 +194,15 @@ bool ExecuteCommand::takeoff() {
     if (srvArmed.response.success) {
     	ROS_INFO("Drone armed");
     } else {
+    	ROS_ERROR("Unable to arm drone");
 		return false;
 	}
 
-    tol_client.call(srvTakeOffLand);
+    takeoff_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
 		ROS_INFO("Drone flying");
 	} else {
+		ROS_ERROR("Unable to takeoff");
 		return false;
 	}
 	return true;
@@ -204,26 +216,15 @@ bool ExecuteCommand::takeoff() {
 
  */
 bool ExecuteCommand::land() {
-	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
-	mavros_msgs::CommandBool srvArmed;
 
-	srvGuided.request.custom_mode = "GUIDED";
-	srvGuided.request.base_mode = 0;
 	srvTakeOffLand.request.altitude = 0;
-	srvArmed.request.value = true;
 
-	set_mode_client.call(srvGuided);
-	if (srvGuided.response.success) {
-		ROS_INFO("Guided mode enabled");
-	} else {
-		return false;
-	}
-
-    tol_client.call(srvTakeOffLand);
+    land_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
 		ROS_INFO("Drone lands");
 	} else {
+		ROS_ERROR("Drone cannot land");
 		return false;
 	}
 	return true;
@@ -529,15 +530,15 @@ int main(int argc, char *argv[]) {
 			command = parseCommand((char *) commandBuffer, executeCommand);
 			
 			if(!command.cmd.empty()) {
-				cout << "Command received : " << command.cmd << "\n";
+				//cout << "Command received : " << command.cmd << "\n";
 			}
-			printf("Seq number received : %d\n", command.seq);
-			printf("tcmd received : %d\n", command.tcmd);
-			printf("Param 1 received : %d\n", command.param1);
-			printf("Param 2 received : %d\n", command.param2);
-			printf("Param 3 received : %d\n", command.param3);
-			printf("Param 4 received : %d\n", command.param4);
-			printf("Param 5 received : %d\n", command.param5);
+			// printf("Seq number received : %d\n", command.seq);
+			// printf("tcmd received : %d\n", command.tcmd);
+			// printf("Param 1 received : %d\n", command.param1);
+			// printf("Param 2 received : %d\n", command.param2);
+			// printf("Param 3 received : %d\n", command.param3);
+			// printf("Param 4 received : %d\n", command.param4);
+			// printf("Param 5 received : %d\n", command.param5);
 
 			// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
 			

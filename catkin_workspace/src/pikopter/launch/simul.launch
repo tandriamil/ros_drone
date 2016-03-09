@@ -6,10 +6,10 @@
 
 	<!-- Global arguments -->
 	<arg name="client_ip" default="" />
-	<arg name="fcu_url" default="tcp://$(arg client_ip):5760" />
+	<!-- <arg name="fcu_url" default="tcp://$(arg client_ip):5760" /> -->
 	<!-- <arg name="fcu_url" default="/dev/ttyACM0:57600" /> -->
 	<!-- <arg name="fcu_url" default="udp://10.5.5.1:15550@10.5.5.105" /> -->
-	<!-- <arg name="fcu_url" default="udp://10.5.5.1:5760@$(arg client_ip):5762" /> -->
+	<arg name="fcu_url" default="udp://10.5.5.1:5760@$(arg client_ip):5762" />
 	<arg name="gcs_url" default="" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />

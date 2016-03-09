@@ -43,7 +43,8 @@ class ExecuteCommand {
 		ros::Subscriber state_sub;
 		ros::ServiceClient arming_client;
 		ros::ServiceClient set_mode_client;
-		ros::ServiceClient tol_client;
+		ros::ServiceClient takeoff_client;
+		ros::ServiceClient land_client;
 		ros::Publisher velocity_pub;
 		geometry_msgs::TwistStamped msgMove;
 };
