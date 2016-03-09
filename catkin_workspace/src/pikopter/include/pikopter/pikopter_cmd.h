@@ -12,6 +12,9 @@
 // The port used for the commands
 #define PORT_CMD 5556
 
+
+#define RATIO_Z 1
+
 /* ################################### Classes ################################### */
 /*!
  * \brief Jakopter commands ros node
@@ -32,8 +35,8 @@ class ExecuteCommand {
 		bool land();
 		void forward(int* accel);
 		void backward(int* accel);
-		bool down(int* accel);
-		bool up(int* accel);
+		void down(int* accel);
+		void up(int* accel);
 		bool left();
 		bool right();
 		float* convertSpeedARDroneToRate(int* speed);

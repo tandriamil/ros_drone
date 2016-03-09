@@ -258,55 +258,20 @@ void ExecuteCommand::backward(int* accel) {
 	velocity_pub.publish(msgMove);
 }
 
-bool ExecuteCommand::down(int* accel) {
+void ExecuteCommand::down(int* accel) {
 	float* rate;
-	mavros_msgs::SetMode srvGuided;
-	mavros_msgs::CommandTOL srvTakeOffLand;
-	mavros_msgs::CommandBool srvArmed;
 
 	rate = convertSpeedARDroneToRate(accel);
-
-	srvGuided.request.custom_mode = "GUIDED";
-	srvGuided.request.base_mode = 0;
-	// if(getCurrentAltitude() - *rate * 10 < 0)
-	// 	srvTakeOffLand.request.altitude = 0;
-	// else
-	// 	srvTakeOffLand.request.altitude = getCurrentAltitude() - *rate * 10;
-
-	srvArmed.request.value = true;
-
-    land_client.call(srvTakeOffLand);
-	if (srvTakeOffLand.response.success) {
-		ROS_INFO("Drone downs");
-	} else {
-		ROS_INFO("Unable to down");
-		return false;
-	}
-	return true;
+	msgMove.twist.linear.z = (*rate * RATIO_Z);
+	velocity_pub.publish(msgMove);
 }
 
-bool ExecuteCommand::up(int* accel) {
+void ExecuteCommand::up(int* accel) {
 	float* rate;
-	mavros_msgs::SetMode srvGuided;
-	mavros_msgs::CommandTOL srvTakeOffLand;
-	mavros_msgs::CommandBool srvArmed;
 
 	rate = convertSpeedARDroneToRate(accel);
-
-	srvGuided.request.custom_mode = "GUIDED";
-	srvGuided.request.base_mode = 0;
-	// srvTakeOffLand.request.altitude = getCurrentAltitude() + *rate * 10;
-	
-	srvArmed.request.value = true;
-
-    takeoff_client.call(srvTakeOffLand);
-	if (srvTakeOffLand.response.success) {
-		ROS_INFO("Drone ups");
-	} else {
-		ROS_INFO("Unable to up");
-		return false;
-	}
-	return true;
+	msgMove.twist.linear.z = *rate * RATIO_Z;
+	velocity_pub.publish(msgMove);
 }
 
 bool ExecuteCommand::left() {
