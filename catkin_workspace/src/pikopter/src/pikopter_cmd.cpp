@@ -152,7 +152,7 @@ float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
 }
 
 float* ExecuteCommand::getCurrentAltitude() {
-	
+	return 0.0;
 }
 
 /**
@@ -267,7 +267,11 @@ bool ExecuteCommand::down(int* accel) {
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	srvTakeOffLand.request.altitude = *rate * 10 + getCurrentAltitude();
+	if(getCurrentAltitude() - *rate * 10 < 0)
+		srvTakeOffLand.request.altitude = 0;
+	else
+		srvTakeOffLand.request.altitude = getCurrentAltitude() - *rate * 10;
+
 	srvArmed.request.value = true;
 
 	set_mode_client.call(srvGuided);
@@ -286,8 +290,34 @@ bool ExecuteCommand::down(int* accel) {
 	return true;
 }
 
-bool ExecuteCommand::up() {
-	return false;
+bool ExecuteCommand::up(int* accel) {
+	float* rate;
+	mavros_msgs::SetMode srvGuided;
+	mavros_msgs::CommandTOL srvTakeOffLand;
+	mavros_msgs::CommandBool srvArmed;
+
+	rate = convertSpeedARDroneToRate(accel);
+
+	srvGuided.request.custom_mode = "GUIDED";
+	srvGuided.request.base_mode = 0;
+	srvTakeOffLand.request.altitude = getCurrentAltitude() + *rate * 10;
+	
+	srvArmed.request.value = true;
+
+	set_mode_client.call(srvGuided);
+	if (srvGuided.response.success) {
+		ROS_INFO("Guided mode enabled");
+	} else {
+		return false;
+	}
+
+    tol_client.call(srvTakeOffLand);
+	if (srvTakeOffLand.response.success) {
+		ROS_INFO("Drone lands");
+	} else {
+		return false;
+	}
+	return true;
 }
 
 bool ExecuteCommand::left() {

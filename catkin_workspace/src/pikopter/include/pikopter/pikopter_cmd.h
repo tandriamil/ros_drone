@@ -33,7 +33,7 @@ class ExecuteCommand {
 		void forward(int* accel);
 		void backward(int* accel);
 		bool down(int* accel);
-		bool up();
+		bool up(int* accel);
 		bool left();
 		bool right();
 		float* convertSpeedARDroneToRate(int* speed);
