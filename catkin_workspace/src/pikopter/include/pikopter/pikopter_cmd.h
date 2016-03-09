@@ -32,11 +32,12 @@ class ExecuteCommand {
 		bool land();
 		void forward(int* accel);
 		void backward(int* accel);
-		bool down();
+		bool down(int* accel);
 		bool up();
 		bool left();
 		bool right();
 		float* convertSpeedARDroneToRate(int* speed);
+		float* getCurrentAltitude();
 
 	private:
 		ros::Subscriber state_sub;
