@@ -274,17 +274,11 @@ bool ExecuteCommand::down(int* accel) {
 
 	srvArmed.request.value = true;
 
-	set_mode_client.call(srvGuided);
-	if (srvGuided.response.success) {
-		ROS_INFO("Guided mode enabled");
-	} else {
-		return false;
-	}
-
     tol_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
-		ROS_INFO("Drone lands");
+		ROS_INFO("Drone downs");
 	} else {
+		ROS_INFO("Unable to down");
 		return false;
 	}
 	return true;
@@ -304,17 +298,11 @@ bool ExecuteCommand::up(int* accel) {
 	
 	srvArmed.request.value = true;
 
-	set_mode_client.call(srvGuided);
-	if (srvGuided.response.success) {
-		ROS_INFO("Guided mode enabled");
-	} else {
-		return false;
-	}
-
     tol_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
-		ROS_INFO("Drone lands");
+		ROS_INFO("Drone ups");
 	} else {
+		ROS_INFO("Unable to up");
 		return false;
 	}
 	return true;
