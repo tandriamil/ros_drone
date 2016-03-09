@@ -189,15 +189,22 @@ void PikopterNavdata::display() {
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
-	ROS_DEBUG("\tdata.demo.tag : %d", navdata_current.demo.tag);
-	ROS_DEBUG("\tdata.demo.vbat_flying_percentage : %d", navdata_current.demo.vbat_flying_percentage);
-	ROS_DEBUG("\tdata.demo.altitude : %d", navdata_current.demo.altitude);
-	ROS_DEBUG("\tdata.demo.theta : %f", navdata_current.demo.theta);
-	ROS_DEBUG("\tdata.demo.phi : %f", navdata_current.demo.phi);
-	ROS_DEBUG("\tdata.demo.psi : %f", navdata_current.demo.psi);
-	ROS_DEBUG("\tdata.demo.vx : %f", navdata_current.demo.vx);
-	ROS_DEBUG("\tdata.demo.vy : %f", navdata_current.demo.vy);
-	ROS_DEBUG("\tdata.demo.vz : %f", navdata_current.demo.vz);
+	ROS_DEBUG("\n");
+	ROS_DEBUG("Navdata n°%d\n", navdata_current.demo.sequence);
+	ROS_DEBUG("\t Header : %d\n", navdata_current.demo.header);
+	ROS_DEBUG("\t Tag : %d\n", navdata_current.demo.tag);
+	ROS_DEBUG("\t Mask : %d\n", navdata_current.demo.ardrone_state);
+	ROS_DEBUG("\t Sequence number : %d\n", navdata_current.demo.sequence);
+	ROS_DEBUG("\t Battery : %d\n", navdata_current.demo.vbat_flying_percentage);
+	ROS_DEBUG("\t Fly state: %x\n", navdata_current.demo.ctrl_state);
+	ROS_DEBUG("\t Altitude : %d\n", navdata_current.demo.altitude);
+	ROS_DEBUG("\t Theta : %f\n", navdata_current.demo.theta);
+	ROS_DEBUG("\t Phi : %f\n", navdata_current.demo.phi);
+	ROS_DEBUG("\t Psi : %f\n", navdata_current.demo.psi);
+	ROS_DEBUG("\t Vx : %f\n", navdata_current.demo.vx);
+	ROS_DEBUG("\t Vy : %f\n", navdata_current.demo.vy);
+	ROS_DEBUG("\t Vz : %f\n", navdata_current.demo.vz);
+	ROS_DEBUG("\n");
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
