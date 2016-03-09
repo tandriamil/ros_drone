@@ -159,9 +159,9 @@ float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
 	return rate;
 }
 
-float* ExecuteCommand::getCurrentAltitude() {
-	return 0.0;
-}
+// float* ExecuteCommand::getCurrentAltitude() {
+// 	return 0.0;
+// }
 
 /**
  * Takeoff command.
@@ -268,14 +268,14 @@ bool ExecuteCommand::down(int* accel) {
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	if(getCurrentAltitude() - *rate * 10 < 0)
-		srvTakeOffLand.request.altitude = 0;
-	else
-		srvTakeOffLand.request.altitude = getCurrentAltitude() - *rate * 10;
+	// if(getCurrentAltitude() - *rate * 10 < 0)
+	// 	srvTakeOffLand.request.altitude = 0;
+	// else
+	// 	srvTakeOffLand.request.altitude = getCurrentAltitude() - *rate * 10;
 
 	srvArmed.request.value = true;
 
-    tol_client.call(srvTakeOffLand);
+    land_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
 		ROS_INFO("Drone downs");
 	} else {
@@ -295,11 +295,11 @@ bool ExecuteCommand::up(int* accel) {
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	srvTakeOffLand.request.altitude = getCurrentAltitude() + *rate * 10;
+	// srvTakeOffLand.request.altitude = getCurrentAltitude() + *rate * 10;
 	
 	srvArmed.request.value = true;
 
-    tol_client.call(srvTakeOffLand);
+    takeoff_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
 		ROS_INFO("Drone ups");
 	} else {
@@ -397,11 +397,11 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5) {
 					fprintf(stderr, "%s\n","DOWN");
-					executeCommand.down();
+					executeCommand.down(&p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5) {
 					fprintf(stderr, "%s\n","UP");
-					executeCommand.up();
+					executeCommand.up(&p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0)) {
 					fprintf(stderr, "%s\n","LEFT");

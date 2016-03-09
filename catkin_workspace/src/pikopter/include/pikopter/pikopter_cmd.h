@@ -37,7 +37,7 @@ class ExecuteCommand {
 		bool left();
 		bool right();
 		float* convertSpeedARDroneToRate(int* speed);
-		float* getCurrentAltitude();
+		//float* getCurrentAltitude();
 
 	private:
 		ros::Subscriber state_sub;
