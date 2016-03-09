@@ -111,8 +111,8 @@ void PikopterNavdata::initNavdata() {
 
 	// We fill the current navdata
 	navdata_current.demo.tag = TAG_DEMO;
-	//navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;  // Not done into pikopter server
-	//navdata_current.demo.size = PACKET_SIZE;  // Not initialized in the pikopter server
+	navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;  // Not done into pikopter server
+	navdata_current.demo.size = PACKET_SIZE;  // Not done in the pikopter server
 	navdata_current.demo.vbat_flying_percentage = DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE;
 	navdata_current.demo.altitude = DEFAULT_NAVDATA_DEMO_ALTITUDE;
 	navdata_current.demo.theta = DEFAULT_NAVDATA_DEMO_THETA;
@@ -122,9 +122,9 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 
-	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION ;
-	navdata_current.demo.ctrl_state = DEFAULT ;
-	//navdata_current.demo.ardrone_state =  //Not initialized in the pikopter
+	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
+	navdata_current.demo.ctrl_state = DEFAULT_CTRL_STATE;
+	//navdata_current.demo.ardrone_state = ???; //Not done in the pikopter
 
 	ROS_INFO("Navdata demo datas initialized to default values");
 
@@ -157,7 +157,7 @@ void PikopterNavdata::sendNavdata() {
 	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work properly");
 
 	// Increment the sequence number
-	//incrementSequenceNumber();  // Not done into pikopter server
+	incrementSequenceNumber();  // Not done into pikopter server
 
 }
 
@@ -343,6 +343,7 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 	navdata_mutex.unlock();	
 }
 
+
 /*!
  * \brief Put the velocity datas into the navdata
  *
@@ -363,9 +364,9 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 	navdata_current.demo.vz = (float32_t)msg->twist.linear.z;
 
 	//Update yaw, roll, pitch
-	navdata_current.demo.phi = (float32_t)msg->twist.angular.x ;
-	navdata_current.demo.theta = (float32_t)msg->twist.angular.y ;
-	navdata_current.demo.psi = (float32_t)msg->twist.angular.z ;
+	navdata_current.demo.phi = (float32_t)msg->twist.angular.x;
+	navdata_current.demo.theta = (float32_t)msg->twist.angular.y;
+	navdata_current.demo.psi = (float32_t)msg->twist.angular.z;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -388,25 +389,22 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "pikopter_navdata");
 
 	// Create a node handle (fully initialize ros)
-	ros::NodeHandle navdata_node_handle;
+	ros::NodeHandle navdata_node_handle("~");
 
-	ros::NodeHandle navdata_private_nh("~");
-
+	// Here, get the IP address
 	std::string ip;
-
-	if(!navdata_private_nh.getParam("ip", ip)) {
-		ROS_FATAL("Missing ip parameter");
+	if (!navdata_node_handle.getParam("ip", ip)) {
+		ROS_FATAL("Navdata is missing its ip address");
 		return ERROR_ENCOUNTERED;
 	}
 
-	char* cstr = new char[ip.length() + 1];
+	// Create the table and store the ip into it
+	char cstr[ip.length() + 1];
 	strcpy(cstr, ip.c_str());
 
 	// Create a pikopter navdata object
 	// TODO: Later, we would be abble to choose between normal or demo mode
 	PikopterNavdata *pn = new PikopterNavdata(cstr, true);
-
-	delete [] cstr;
 
 	// Get the rate for this node in function of the mode
 	int rate;

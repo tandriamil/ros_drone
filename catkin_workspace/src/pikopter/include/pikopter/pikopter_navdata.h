@@ -69,8 +69,10 @@
 #define DEFAULT_NAVDATA_DEMO_VX 0
 #define DEFAULT_NAVDATA_DEMO_VY 0
 #define DEFAULT_NAVDATA_DEMO_VZ 0
-
 #define DEFAULT_NAVDATA_DEMO_VISION false
+#define DEFAULT_CTRL_STATE 0
+
+
 
 /* ################################### TYPE DEF ################################### */
 
