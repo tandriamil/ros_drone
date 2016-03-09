@@ -11,6 +11,8 @@
 /* ################################### CONSTANTS ################################### */
 // The port used for the commands
 #define PORT_CMD 5556
+#define MAX_SPEED_CMD 10
+#define MAX_VEL_TURN_CMD 20
 
 
 #define RATIO_Z 1
@@ -35,10 +37,10 @@ class ExecuteCommand {
 		bool land();
 		void forward(int* accel);
 		void backward(int* accel);
-		void down(int* accel);
-		void up(int* accel);
-		bool left();
-		bool right();
+		bool down(int* accel);
+		bool up(int* accel);
+		void left(int* accel);
+		void right(int* accel);
 		float* convertSpeedARDroneToRate(int* speed);
 		//float* getCurrentAltitude();
 

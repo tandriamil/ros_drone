@@ -240,7 +240,7 @@ void ExecuteCommand::forward(int* accel) {
 	float* rate;
 
 	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.x = *rate * 10;
+	msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
 	velocity_pub.publish(msgMove);
 }
 
@@ -254,7 +254,7 @@ void ExecuteCommand::backward(int* accel) {
 	float* rate;
 
 	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.x = *rate * 10;
+	msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
 	velocity_pub.publish(msgMove);
 }
 
@@ -274,12 +274,21 @@ void ExecuteCommand::up(int* accel) {
 	velocity_pub.publish(msgMove);
 }
 
-bool ExecuteCommand::left() {
-	return false;
+void ExecuteCommand::left(int* accel) {
+	float* rate;
+	fprintf(stderr, "%d\n", *accel);
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.angular.z = (*rate * MAX_VEL_TURN_CMD) * (-1);
+	velocity_pub.publish(msgMove);
 }
 
-bool ExecuteCommand::right() {
-	return false;	
+void ExecuteCommand::right(int* accel) {
+	float* rate;
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.angular.z = (*rate * MAX_VEL_TURN_CMD) * (-1);
+	velocity_pub.publish(msgMove);
 }
 
 
@@ -370,11 +379,11 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0)) {
 					fprintf(stderr, "%s\n","LEFT");
-					executeCommand.left();
+					executeCommand.left(&p5);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
-					executeCommand.right();
+					executeCommand.right(&p5);
 				}
 				else {
 					fprintf(stderr,"received PCMD: %d,%d,%d,%d,%d,%d\n",seq,p1,p2,p3,p4,p5);
