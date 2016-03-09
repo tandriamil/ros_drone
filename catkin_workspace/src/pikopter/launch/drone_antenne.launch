@@ -1,12 +1,12 @@
 <launch>
 
 	<!-- To launch this script, use the command
-		roslaunch pikopter simul.launch client_ip:=`echo $SSH_CLIENT | awk '{ print $1}'`
+		roslaunch pikopter drone_antenne.launch client_ip:=`echo $SSH_CLIENT | awk '{ print $1}'`
 	-->
 
 	<!-- Global arguments -->
 	<arg name="client_ip" default="" />
-	<arg name="fcu_url" default="udp://10.5.5.1:5760@$(arg client_ip):5762" />
+	<arg name="fcu_url" default="/dev/ttyUSB0:115200" />
 	<arg name="gcs_url" default="" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />
