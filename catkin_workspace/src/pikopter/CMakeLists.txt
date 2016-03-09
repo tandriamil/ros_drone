@@ -140,11 +140,11 @@ add_library(pikopter_network src/pikopter_network.cpp)
 
 add_executable(pikopter_cmd src/pikopter_cmd.cpp)
 add_executable(pikopter_navdata src/pikopter_navdata.cpp)
-add_executable(pikopter_test_takeoff src/pikopter_test_takeoff.cpp)
+#add_executable(pikopter_test_takeoff src/pikopter_test_takeoff.cpp)
 
 target_link_libraries(pikopter_cmd ${catkin_LIBRARIES} pikopter_network)
 target_link_libraries(pikopter_navdata ${catkin_LIBRARIES} pikopter_network)
-target_link_libraries(pikopter_test_takeoff ${catkin_LIBRARIES})
+#target_link_libraries(pikopter_test_takeoff ${catkin_LIBRARIES})
 
 # Force using c++11 to use mutex
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")

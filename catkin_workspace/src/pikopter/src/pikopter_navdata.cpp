@@ -96,7 +96,7 @@ void PikopterNavdata::incrementSequenceNumber() {
 	navdata_mutex.lock();
 
 	// Increment the sequence number
-	navdata_current.demo.sequence++;
+	++navdata_current.demo.sequence;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -111,6 +111,7 @@ void PikopterNavdata::initNavdata() {
 
 	// We fill the current navdata
 	navdata_current.demo.tag = TAG_DEMO;
+	navdata_current.demo.header = DEFAULT_NAVDATA_DEMO_HEADER;  // Not done into pikopter server
 	navdata_current.demo.sequence = DEFAULT_NAVDATA_DEMO_SEQUENCE;  // Not done into pikopter server
 	navdata_current.demo.size = PACKET_SIZE;  // Not done in the pikopter server
 	navdata_current.demo.vbat_flying_percentage = DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE;
@@ -121,9 +122,8 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vx = DEFAULT_NAVDATA_DEMO_VX;
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
-
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
-	navdata_current.demo.ctrl_state = DEFAULT_CTRL_STATE;
+	navdata_current.demo.ctrl_state = DEFAULT_NAVDATA_DEMO_CTRL_STATE;
 	//navdata_current.demo.ardrone_state = ???; //Not done in the pikopter
 
 	ROS_INFO("Navdata demo datas initialized to default values");
