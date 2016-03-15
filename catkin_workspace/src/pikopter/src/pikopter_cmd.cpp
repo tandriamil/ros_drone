@@ -276,10 +276,10 @@ void ExecuteCommand::up(int* accel) {
 
 void ExecuteCommand::left(int* accel) {
 	float* rate;
+	fprintf(stderr, "%d\n", *accel);
 
 	rate = convertSpeedARDroneToRate(accel);
 	msgMove.twist.angular.z = (*rate * MAX_VEL_TURN_CMD) * (-1);
-	fprintf(stderr, "%f\n", msgMove.twist.angular.z);
 	velocity_pub.publish(msgMove);
 }
 
@@ -500,7 +500,7 @@ int main(int argc, char *argv[]) {
 		// if we receive something...
 		if(ret > 0) {			
 			// Get command
-			//printf("%s\n", commandBuffer);
+			printf("%s\n", commandBuffer);
 			command = parseCommand((char *) commandBuffer, executeCommand);
 			
 			if(!command.cmd.empty()) {
