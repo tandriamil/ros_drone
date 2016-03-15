@@ -7,13 +7,11 @@
 #include "pikopter_common.h"
 
 // Mavros structures includes for the subscribers
-#include "tf/tf.h"
 #include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "mavros_msgs/ExtendedState.h"
 #include "mavros_msgs/State.h"
-#include "sensor_msgs/Imu.h"
 
 // Mavros structures includes for the services used
 #include "mavros_msgs/StreamRate.h"
@@ -52,10 +50,9 @@
 // Subscribers' buffer size
 #define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
 #define SUB_BUF_SIZE_BATTERY 1
-#define SUB_BUF_SIZE_LOCAL_POS_GP_VEL 1
-#define SUB_BUF_SIZE_IMU_DATA 1
+#define SUB_BUF_SIZE_GLOBAL_POS_GP_VEL 1
 #define SUB_BUF_SIZE_EXTENDED_STATE 1
-#define SUB_BUF_SIZE_STATE 1
+#define SUB_BUF_SIZE_STATE 1 
 
 
 /* ##### Specific to navdata (new constants) ##### */
@@ -75,7 +72,6 @@
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 #define DEFAULT_NAVDATA_DEMO_VISION false
 #define DEFAULT_NAVDATA_DEMO_CTRL_STATE 0
-
 
 
 
@@ -232,7 +228,6 @@ class PikopterNavdata {
 		void handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg);
 		void getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg);
 		void getState(const mavros_msgs::State::ConstPtr& msg);
-		void handleImuPosition(const sensor_msgs::Imu::ConstPtr& msg);
 
 		// Accessors
 		bool inDemoMode();
