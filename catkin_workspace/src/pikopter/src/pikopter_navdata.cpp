@@ -363,14 +363,37 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 	navdata_current.demo.vy = (float32_t)msg->twist.linear.y;
 	navdata_current.demo.vz = (float32_t)msg->twist.linear.z;
 
-	//Update yaw, roll, pitch
-	navdata_current.demo.phi = (float32_t)msg->twist.angular.x;
-	navdata_current.demo.theta = (float32_t)msg->twist.angular.y;
-	navdata_current.demo.psi = (float32_t)msg->twist.angular.z;
-
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
 
+}
+
+
+/*!
+ * \brief Put the imu position datas into the navdata
+ */
+void PikopterNavdata::handleImuPosition(const sensor_msgs::Imu::ConstPtr& msg) {
+
+	// Get the quaternion values
+	tf::Quaternion quaternion (msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
+
+	// Cast it as a 3x3 matrix
+	tf::Matrix3x3 matrix (quaternion);
+
+	// Then get the euler values converted from this matrix
+	double roll, pitch, yaw;
+	matrix.getEulerYPR(yaw, pitch, roll);
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Updatas velocity datas
+	navdata_current.demo.theta = (float32_t)pitch;
+	navdata_current.demo.phi = (float32_t)roll;
+	navdata_current.demo.psi = (float32_t)yaw;
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
 }
 
 
@@ -424,7 +447,10 @@ int main(int argc, char **argv) {
 	ros::Subscriber sub_mavros_battery = navdata_node_handle.subscribe("mavros/battery", SUB_BUF_SIZE_BATTERY, &PikopterNavdata::handleBattery, pn);
 
 	// Here we receive the velocity
-	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_GLOBAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
+	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_LOCAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
+
+	// Here we receive the imu position
+	ros::Subscriber sub_mavros_imu_data = navdata_node_handle.subscribe("mavros/imu/data", SUB_BUF_SIZE_IMU_DATA, &PikopterNavdata::handleImuPosition, pn);
 
 	//Here we receive state of drone
 	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
