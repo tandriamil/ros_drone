@@ -4,22 +4,22 @@
 
 /* ################################### INCLUDES ################################### */
 // System librairies used by pikopter
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <time.h>
-#include <limits.h>
-#include <pthread.h>
-#include <sys/uio.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <sstream>
+#include "stdio.h"
+#include "stdlib.h"
+#include "stdint.h"
+#include "unistd.h"
+#include "sys/socket.h"
+#include "arpa/inet.h"
+#include "errno.h"
+#include "string.h"
+#include "sys/types.h"
+#include "time.h"
+#include "limits.h"
+#include "pthread.h"
+#include "sys/uio.h"
+#include "netinet/in.h"
+#include "netdb.h"
+#include "sstream"
 #include "std_msgs/String.h"
 #include "mutex"
 
@@ -27,6 +27,10 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "ros/types.h"
+
+// TF2 utilies for the Quaternion managment
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
 
 
 

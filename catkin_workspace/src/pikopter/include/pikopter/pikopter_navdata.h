@@ -7,7 +7,6 @@
 #include "pikopter_common.h"
 
 // Mavros structures includes for the subscribers
-#include "tf/tf.h"
 #include "std_msgs/Float64.h"
 #include "mavros_msgs/BatteryStatus.h"
 #include "geometry_msgs/TwistStamped.h"
@@ -74,7 +73,7 @@
 #define DEFAULT_NAVDATA_DEMO_VY 0
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 #define DEFAULT_NAVDATA_DEMO_VISION false
-#define DEFAULT_NAVDATA_DEMO_CTRL_STATE 0
+#define DEFAULT_NAVDATA_DEMO_CTRL_STATE 0x0400  // 1024 because only the 11th bit is at 1
 
 
 

@@ -1,6 +1,7 @@
 // Include pikopter navdata headers
 #include "../include/pikopter/pikopter_navdata.h"
 
+
 /*!
  * \brief Constructor of PikopterNavdata
  *
@@ -11,7 +12,7 @@ PikopterNavdata::PikopterNavdata(char *ip_adress, bool in_demo) {
 
 	// Open the UDP port for the navadata node
 	navdata_fd = PikopterNetwork::open_udp_socket(PORT_NAVDATA, &addr_drone_navdata, ip_adress);
-	if (navdata_fd == ERROR_ENCOUNTERED){
+	if (navdata_fd == ERROR_ENCOUNTERED) {
 		ROS_FATAL("Fatal error during the opening of the navdata socket");
 		ROS_FATAL("Fatal error code %d", navdata_fd);
 		exit(EXIT_FAILURE);
@@ -124,7 +125,7 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
 	navdata_current.demo.ctrl_state = DEFAULT_NAVDATA_DEMO_CTRL_STATE;
-	//navdata_current.demo.ardrone_state = ???; //Not done in the pikopter
+	// navdata_current.demo.ardrone_state; //Not done in the pikopter
 
 	ROS_INFO("Navdata demo datas initialized to default values");
 
@@ -231,10 +232,19 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 
 }
 
-/***************** Fonction getState a voir ******/
-void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg)
-{
-/* ##### Enter Critical Section ##### */
+
+/*!
+ * \brief Get the state of the drone
+ */
+void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg) {
+
+	// Check if we got strange states
+	if ((msg->vtol_state > 0) && (msg->landed_state > 0))
+		ROS_WARN("Strange state where the drone is considered as flying and landing at the same time. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
+	else if ((msg->vtol_state == 0) && (msg->landed_state == 0))
+		ROS_WARN("Strange state where the drone is considered as not flying nor landing.");
+
+	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
  
  	//Pour l'etat en vol
@@ -276,7 +286,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 		}
 	}
 
-	//Pour l'etat a terre
+	// If landed
 	switch(msg->landed_state)
 	{
 		navdata_current.demo.ctrl_state = LAND ;
@@ -313,9 +323,9 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 /*!
  *	Utilisation de l'etat avec navdata_raw !!!
  */
-void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
-{
-/* ##### Enter Critical Section ##### */
+void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg) {
+	
+	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
 	//Si on est connecter au drone
@@ -339,7 +349,7 @@ void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg)
 			//navdata_current.demo.ardrone_state = ... ;
 	}
 
-/* ##### Exit Critical Section ##### */
+	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();	
 }
 
@@ -375,10 +385,10 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 void PikopterNavdata::handleImuPosition(const sensor_msgs::Imu::ConstPtr& msg) {
 
 	// Get the quaternion values
-	tf::Quaternion quaternion (msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
+	tf2::Quaternion quaternion (msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
 
 	// Cast it as a 3x3 matrix
-	tf::Matrix3x3 matrix (quaternion);
+	tf2::Matrix3x3 matrix (quaternion);
 
 	// Then get the euler values converted from this matrix
 	double roll, pitch, yaw;
