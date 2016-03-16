@@ -6,6 +6,16 @@
 // Pikotper common includes
 #include "pikopter_common.h"
 
+#include <mavros_msgs/CommandTOL.h>
+#include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/CommandBool.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <mavros_msgs/State.h>
+#include "geometry_msgs/TwistStamped.h"
+#include "geometry_msgs/PoseStamped.h"
+#include <tf2/LinearMath/Quaternion.h>
+#include "std_msgs/Float64.h"
+
 
 
 /* ################################### CONSTANTS ################################### */
@@ -51,7 +61,9 @@ class ExecuteCommand {
 		ros::ServiceClient takeoff_client;
 		ros::ServiceClient land_client;
 		ros::Publisher velocity_pub;
+		ros::Publisher attitude_pub;
 		geometry_msgs::TwistStamped msgMove;
+		geometry_msgs::PoseStamped msgAttitude;
 };
 
 #endif

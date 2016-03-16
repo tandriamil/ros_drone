@@ -1,28 +1,3 @@
-/* Import System */
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <time.h>
-#include <limits.h>
-#include <pthread.h>
-#include <sys/uio.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-
-/* Import Headers */
-#include "../include/pikopter/pikopter_common.h"
-#include <mavros_msgs/CommandTOL.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/CommandBool.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/State.h>
-
 #include "../include/pikopter/pikopter_cmd.h"
 
 using namespace std;
@@ -100,6 +75,7 @@ ExecuteCommand::ExecuteCommand() {
 
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
+	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
 }
 
 /**
@@ -179,7 +155,7 @@ bool ExecuteCommand::takeoff() {
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	srvTakeOffLand.request.altitude = 50;
+	srvTakeOffLand.request.altitude = 10;
 	srvArmed.request.value = true;
 
 	set_mode_client.call(srvGuided);
@@ -275,20 +251,29 @@ void ExecuteCommand::up(int* accel) {
 }
 
 void ExecuteCommand::left(int* accel) {
-	float* rate;
+	// float* rate;
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.angular.z = (*rate * MAX_VEL_TURN_CMD) * (-1);
-	fprintf(stderr, "%f\n", msgMove.twist.angular.z);
-	velocity_pub.publish(msgMove);
+	// rate = convertSpeedARDroneToRate(accel);
+	// tf2::Quaternion q;
+	// q.setRPY(0.0, 0.0, 5.0);
+	// float x = q.getAxis()[0];
+	// float y = q.getAxis()[1];
+	// float z = q.getAxis()[2];
+	// msgAttitude.pose.orientation.x = 0.0f;
+	// msgAttitude.pose.orientation.y = 0.0f;
+	// msgAttitude.pose.orientation.z = 2.0f;
+	// float w = 5.0f;
+	// msgAttitude.pose.orientation.w = w;
+	// ROS_INFO("Orientation x : %f", x);
+	// ROS_INFO("Orientation y : %f", y);
+	// ROS_INFO("Orientation z : %f", z);
+	// ROS_INFO("Orientation w : %f", w);
+
+	// attitude_pub.publish(msgAttitude);
 }
 
 void ExecuteCommand::right(int* accel) {
-	float* rate;
-
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.angular.z = (*rate * MAX_VEL_TURN_CMD) * (-1);
-	velocity_pub.publish(msgMove);
+	
 }
 
 
@@ -431,8 +416,6 @@ int main(int argc, char *argv[]) {
 
 	ros::NodeHandle cmd_private_nh("~");
 
-	//ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
-
 	std::string ip;
 
 	if(!cmd_private_nh.getParam("ip", ip)) {
@@ -513,15 +496,6 @@ int main(int argc, char *argv[]) {
 			// printf("Param 3 received : %d\n", command.param3);
 			// printf("Param 4 received : %d\n", command.param4);
 			// printf("Param 5 received : %d\n", command.param5);
-
-			// Create a publisher and advertise any nodes listening on pikopter_mavlink topic that we are going to publish
-			
-			/* --- A MODIFIER --- */
-			
-			/* -- Le topic sur lequel ce noeud doit publier dépend de la commande reçue -- */
-			// ros::Publisher cmd_pub = nodeHandle.advertise<std_msgs::String>("mavros", 1000);
-
-			/* ------------------ */
 
 		}
 
