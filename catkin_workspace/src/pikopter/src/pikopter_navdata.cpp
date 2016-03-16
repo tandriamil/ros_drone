@@ -320,45 +320,12 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 	navdata_mutex.unlock();
 }
 
-/*!
- *	Utilisation de l'etat avec navdata_raw !!!
- */
-void PikopterNavdata::getState(const mavros_msgs::State::ConstPtr& msg) {
-	
-	/* ##### Enter Critical Section ##### */
-	navdata_mutex.lock();
-
-	//Si on est connecter au drone
-	if(msg->connected){
-		//Le mode FLY est OK
-		ROS_DEBUG("MODE FLY : SUCCES") ;
-		//Le mode HOVER est OK
-		ROS_DEBUG("MODE HOVER : SUCCES") ;
-		//Le mode MOVE est OK 
-		ROS_DEBUG("MODE MOVE : SUCCES") ;
-			//navdata_current.demo.ardrone_state = ... ;
-	}
-	//Sinon
-	else{
-		//Le mode FLY est perdu
-		ROS_DEBUG("MODE FLY : FAIL") ;
-		//Le mode HOVER est perdu
-		ROS_DEBUG("MODE HOVER : FAIL") ;
-		//Le mode MOVE est perdu
-		ROS_DEBUG("MODE MOVE : FAIL") ;
-			//navdata_current.demo.ardrone_state = ... ;
-	}
-
-	/* ##### Exit Critical Section ##### */
-	navdata_mutex.unlock();	
-}
-
 
 /*!
  * \brief Put the velocity datas into the navdata
  *
  * \remark The values got from this function are estimated by the drone.
- *         It could be better to get those values from global_position topics
+ *         It could be better to get those values from local_position topics
  *         which fetch those datas form GPS position
  */
 void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg) {
@@ -382,10 +349,10 @@ void PikopterNavdata::handleVelocity(const geometry_msgs::TwistStamped::ConstPtr
 /*!
  * \brief Put the imu position datas into the navdata
  */
-void PikopterNavdata::handleImuPosition(const sensor_msgs::Imu::ConstPtr& msg) {
+void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 
 	// Get the quaternion values
-	tf2::Quaternion quaternion (msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
+	tf2::Quaternion quaternion (msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
 
 	// Cast it as a 3x3 matrix
 	tf2::Matrix3x3 matrix (quaternion);
@@ -457,17 +424,13 @@ int main(int argc, char **argv) {
 	ros::Subscriber sub_mavros_battery = navdata_node_handle.subscribe("mavros/battery", SUB_BUF_SIZE_BATTERY, &PikopterNavdata::handleBattery, pn);
 
 	// Here we receive the velocity
-	ros::Subscriber sub_mavros_global_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_LOCAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
+	ros::Subscriber sub_mavros_local_position_gp_vel = navdata_node_handle.subscribe("mavros/local_position/velocity", SUB_BUF_SIZE_LOCAL_POS_GP_VEL, &PikopterNavdata::handleVelocity, pn);
 
 	// Here we receive the imu position
-	ros::Subscriber sub_mavros_imu_data = navdata_node_handle.subscribe("mavros/imu/data", SUB_BUF_SIZE_IMU_DATA, &PikopterNavdata::handleImuPosition, pn);
+	ros::Subscriber sub_mavros_local_position_pose = navdata_node_handle.subscribe("mavros/local_position/pose", SUB_BUF_SIZE_LOCAL_POS_POSE, &PikopterNavdata::handleOrientation, pn);
 
 	//Here we receive state of drone
 	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
-
-	//Here we receieve general state of drone
-/**** Mettre une tempo importante pour ce topic là ****/
-	ros::Subscriber sub_mavros_state = navdata_node_handle.subscribe("mavros/state", SUB_BUF_SIZE_STATE, &PikopterNavdata::getState, pn) ;
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {
