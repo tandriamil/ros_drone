@@ -225,6 +225,7 @@ class PikopterNavdata {
 		~PikopterNavdata();  // Destructor
 		void sendNavdata();  // Send the navdata
 		void display();  // Display the current method of the navdata
+		void setBitEndOfBootstrap();
 
 		// Handlers
 		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
@@ -244,7 +245,6 @@ class PikopterNavdata {
 		void initNavdata();
 		void askMavrosRate();
 		void incrementSequenceNumber();
-		void setBitEndOfBootstrap();
 
 		// Private attributes
 		struct sockaddr_in addr_drone_navdata;
