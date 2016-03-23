@@ -31,6 +31,7 @@
 // TF2 utilies for the Quaternion managment
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Transform.h"
 
 
 

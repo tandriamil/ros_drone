@@ -2,6 +2,9 @@
 
 using namespace std;
 
+namespace {
+	const double pi = 3.14159265358979323846;
+}
 
 /* Declarations */
 //char *STATION_IP = NULL;
@@ -75,7 +78,7 @@ ExecuteCommand::ExecuteCommand() {
 
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
-	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
+	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_attitude/attitude", 100);
 }
 
 /**
@@ -251,25 +254,19 @@ void ExecuteCommand::up(int* accel) {
 }
 
 void ExecuteCommand::left(int* accel) {
-	// float* rate;
+	//
+	//geometry_msgs::Quaternion m;
+	//m = tf::createQuaternionMsgFromYaw(1.0);
+	//msgAttitude.pose.orientation = m;
+	//attitude_pub.publish(msgAttitude);
+	double angleDeg = 90;
+	double rad = angleDeg * pi / 180.0;
+	msgAttitude.pose.orientation.x = cos(rad/2);
+	msgAttitude.pose.orientation.y = 0.0;
+	msgAttitude.pose.orientation.z = 0.0;
+	msgAttitude.pose.orientation.w = sin(rad/2);
 
-	// rate = convertSpeedARDroneToRate(accel);
-	// tf2::Quaternion q;
-	// q.setRPY(0.0, 0.0, 5.0);
-	// float x = q.getAxis()[0];
-	// float y = q.getAxis()[1];
-	// float z = q.getAxis()[2];
-	// msgAttitude.pose.orientation.x = 0.0f;
-	// msgAttitude.pose.orientation.y = 0.0f;
-	// msgAttitude.pose.orientation.z = 2.0f;
-	// float w = 5.0f;
-	// msgAttitude.pose.orientation.w = w;
-	// ROS_INFO("Orientation x : %f", x);
-	// ROS_INFO("Orientation y : %f", y);
-	// ROS_INFO("Orientation z : %f", z);
-	// ROS_INFO("Orientation w : %f", w);
-
-	// attitude_pub.publish(msgAttitude);
+	attitude_pub.publish(msgAttitude);
 }
 
 void ExecuteCommand::right(int* accel) {
