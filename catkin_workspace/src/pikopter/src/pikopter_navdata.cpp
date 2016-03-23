@@ -135,6 +135,22 @@ void PikopterNavdata::initNavdata() {
 
 
 /*!
+ * \brief Put the correct bit into the bitmask
+ * To say that the bootstrap process has ended
+ */
+void PikopterNavdata::setBitEndOfBootstrap() {
+
+	ROS_DEBUG("Bootstrap process has ended. Now ready to send navdatas.");
+
+	// No critical section because it's still sequential until here
+
+	// Put the bit into the bitmask
+	navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0x0400;
+
+}
+
+
+/*!
  * \brief Send the navdata
  */
 void PikopterNavdata::sendNavdata() {
@@ -445,8 +461,11 @@ int main(int argc, char **argv) {
 	// Here we receive the imu position
 	ros::Subscriber sub_mavros_local_position_pose = navdata_node_handle.subscribe("mavros/local_position/pose", SUB_BUF_SIZE_LOCAL_POS_POSE, &PikopterNavdata::handleOrientation, pn);
 
-	//Here we receive state of drone
+	// Here we receive the state of the drone
 	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
+
+	// We change the state of the navdata to say that it is sending navdatas
+	pn->setBitEndOfBootstrap();
 
 	// Here we'll spin and send navdatas periodically
 	while(ros::ok()) {

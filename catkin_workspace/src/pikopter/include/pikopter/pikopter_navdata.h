@@ -244,6 +244,7 @@ class PikopterNavdata {
 		void initNavdata();
 		void askMavrosRate();
 		void incrementSequenceNumber();
+		void setBitEndOfBootstrap();
 
 		// Private attributes
 		struct sockaddr_in addr_drone_navdata;
