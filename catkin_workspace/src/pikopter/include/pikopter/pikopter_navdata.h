@@ -61,6 +61,7 @@
 /* ##### Specific to navdata (new constants) ##### */
 // The value of the battery percentage
 #define BATTERY_PERCENTAGE 100  // To put into percentage
+#define CRITICAL_BATTERY_LIMIT 10  // 10%
 
 // Default values of the navdata demo buffer
 #define DEFAULT_NAVDATA_DEMO_SEQUENCE 1

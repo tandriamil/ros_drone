@@ -124,7 +124,7 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
-	navdata_current.demo.ctrl_state = DEFAULT_NAVDATA_DEMO_CTRL_STATE;
+	navdata_current.demo.ctrl_state = DEFAULT_NAVDATA_DEMO_CTRL_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
 	// navdata_current.demo.ardrone_state; //Not done in the pikopter
 
 	ROS_DEBUG("Navdata demo datas initialized to default values");
@@ -145,7 +145,7 @@ void PikopterNavdata::setBitEndOfBootstrap() {
 	// No critical section because it's still sequential until here
 
 	// Put the bit into the bitmask
-	navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0x0400;
+	navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0x03FF;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 0
 
 }
 
@@ -170,7 +170,6 @@ void PikopterNavdata::sendNavdata() {
 
 	// Try to send the navdata
 	ssize_t sent_size = sendto(navdata_fd, tmp_buff, PACKET_SIZE, 0, (struct sockaddr*)&addr_drone_navdata, sizeof(addr_drone_navdata));
-
 
 	// Display error if there's one
 	if (sent_size < 0) ROS_ERROR("Send of navdata packet didn't work properly");
@@ -248,15 +247,29 @@ void PikopterNavdata::display() {
  */
 void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& msg) {
 
-	ROS_DEBUG("Entered battery with value=%d", (int)(msg->remaining * BATTERY_PERCENTAGE));
+	// Get the value of the battery
+	int remaining_battery = (int)(msg->remaining * BATTERY_PERCENTAGE);
+
+	ROS_DEBUG("Entered battery with value=%d", remaining_battery;
 	//ROS_DEBUG("Entered battery with value=%d", (int)(msg->voltage / BATTERY_PERCENTAGE));
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
 	// Put the correct battery status then
-	navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->remaining * BATTERY_PERCENTAGE);
+	navdata_current.demo.vbat_flying_percentage = (uint32_t)remaining_battery;
 	//navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->voltage / BATTERY_PERCENTAGE);
+
+	// If acceptable battery level
+	if ((remaining_battery <= 100) && (remaining_battery > CRITICAL_BATTERY_LIMIT))
+		navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0xFFFFBFFF;  // Bit ARDRONE_VBAT_LOW to 0
+
+	// If critical level
+	else if ((remaining_battery > 0) && (remaining_battery < CRITICAL_BATTERY_LIMIT))
+		navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state | 0x4000;  // Bit ARDRONE_VBAT_LOW to 1
+
+	// If incorrect value
+	else ROS_WARN("Incorrect value of the remaining battery: %d", remaining_battery);
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
