@@ -124,8 +124,8 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vy = DEFAULT_NAVDATA_DEMO_VY;
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
-	navdata_current.demo.ctrl_state = DEFAULT_NAVDATA_DEMO_CTRL_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
-	// navdata_current.demo.ardrone_state; //Not done in the pikopter
+	navdata_current.demo.ctrl_state = DEFAULT;
+	navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_DEMO_ARDRONE_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
 
 	ROS_DEBUG("Navdata demo datas initialized to default values");
 
@@ -145,7 +145,7 @@ void PikopterNavdata::setBitEndOfBootstrap() {
 	// No critical section because it's still sequential until here
 
 	// Put the bit into the bitmask
-	navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0x03FF;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 0
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0x03FF;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 0
 
 }
 
@@ -262,11 +262,11 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 
 	// If acceptable battery level
 	if ((remaining_battery <= 100) && (remaining_battery > CRITICAL_BATTERY_LIMIT))
-		navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state & 0xFFFFBFFF;  // Bit ARDRONE_VBAT_LOW to 0
+		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFBFFF;  // Bit ARDRONE_VBAT_LOW to 0
 
 	// If critical level
 	else if ((remaining_battery > 0) && (remaining_battery < CRITICAL_BATTERY_LIMIT))
-		navdata_current.demo.ctrl_state = navdata_current.demo.ctrl_state | 0x4000;  // Bit ARDRONE_VBAT_LOW to 1
+		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 0x4000;  // Bit ARDRONE_VBAT_LOW to 1
 
 	// If incorrect value
 	else ROS_WARN("Incorrect value of the remaining battery: %d", remaining_battery);
@@ -288,10 +288,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 	else if ((msg->vtol_state == 0) && (msg->landed_state == 0))
 		ROS_WARN("Strange state where the drone is considered as not flying nor landing.");
 
-	/* ##### Enter Critical Section ##### */
-	navdata_mutex.lock();
- 
- 	//Pour l'etat en vol
+	// Pour l'etat en vol
 	switch(msg->vtol_state)
 	{
 		navdata_current.demo.ctrl_state = FLY ;
@@ -360,8 +357,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 			ROS_DEBUG("LANDED_STATE_IN_AIR") ;
 		}
 	}
-/* ##### Exit Critical Section ##### */
-	navdata_mutex.unlock();
+
 }
 
 
