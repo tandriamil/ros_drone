@@ -50,6 +50,8 @@ class ExecuteCommand {
 		void up(int* accel);
 		void left(int* accel);
 		void right(int* accel);
+		void slide_left(int* accel);
+		void slide_right(int* accel);
 		float* convertSpeedARDroneToRate(int* speed);
 		//float* getCurrentAltitude();
 

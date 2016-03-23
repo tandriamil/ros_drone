@@ -276,7 +276,21 @@ void ExecuteCommand::right(int* accel) {
 	
 }
 
+void ExecuteCommand::slide_right(int* accel) {
+	float* rate;
 
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
+	velocity_pub.publish(msgMove);
+}
+
+void ExecuteCommand::slide_left(int* accel) {
+	float* rate;
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
+	velocity_pub.publish(msgMove);
+}
 
 /*!
  * \brief Parsing command
@@ -369,6 +383,15 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
 					executeCommand.right(&p5);
+				}
+				else if((p1 == 1) && (p2 < 0) && !p3 && !p4 && !p5) {
+					fprintf(stderr, "%s\n","SLIDE_LEFT");
+					executeCommand.slide_left(&p2);
+				}
+				else if((p1 == 1) && (p2 > 0) && !p3 && !p4 && !p5) {
+					//CHECK IT
+					fprintf(stderr, "%s\n","SLIDE_RIGHT");
+					executeCommand.slide_right(&p2);
 				}
 				else {
 					fprintf(stderr,"received PCMD: %d,%d,%d,%d,%d,%d\n",seq,p1,p2,p3,p4,p5);
