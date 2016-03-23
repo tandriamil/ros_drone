@@ -47,6 +47,7 @@
 // For ArDrone, in demo mode it's 15Hz and in normal mode it's 200Hz
 #define NAVDATA_DEMO_LOOP_RATE 15
 #define NAVDATA_LOOP_RATE 200
+#define NAVDATA_DISPLAY_RATE 1000
 
 // Subscribers' buffer size
 #define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
@@ -59,7 +60,8 @@
 
 /* ##### Specific to navdata (new constants) ##### */
 // The value of the battery percentage
-#define BATTERY_PERCENTAGE 1000  // 1 => Give same, 1000 => To put V to mV
+#define BATTERY_PERCENTAGE 100  // To put into percentage
+#define CRITICAL_BATTERY_LIMIT 10  // 10%
 
 // Default values of the navdata demo buffer
 #define DEFAULT_NAVDATA_DEMO_SEQUENCE 1
@@ -73,7 +75,7 @@
 #define DEFAULT_NAVDATA_DEMO_VY 0
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 #define DEFAULT_NAVDATA_DEMO_VISION false
-#define DEFAULT_NAVDATA_DEMO_CTRL_STATE 0x0400  // 1024 because only the 11th bit is at 1
+#define DEFAULT_NAVDATA_DEMO_ARDRONE_STATE 0x0400  // 1024 because only the 11th bit is at 1
 
 
 
@@ -181,7 +183,7 @@ struct navdata_demo {
 	uint16_t   tag;  // Type of the packet: must be TAG_DEMO
 	uint16_t   size;  // Size of the packet in bytes
 	uint32_t   ctrl_state;  // Flying state (landed, flying, hovering, etc.)
-	uint32_t   vbat_flying_percentage;  // Battery voltage filtered (mV)
+	uint32_t   vbat_flying_percentage;  // Battery in remaining percentage
 
 	// UAV (Unmanned Aerial Vehicle ~ drone) state
 	float32_t  theta;  // UAV's pitch in milli-degrees
@@ -224,6 +226,7 @@ class PikopterNavdata {
 		~PikopterNavdata();  // Destructor
 		void sendNavdata();  // Send the navdata
 		void display();  // Display the current method of the navdata
+		void setBitEndOfBootstrap();
 
 		// Handlers
 		void getAltitude(const std_msgs::Float64::ConstPtr& msg);
