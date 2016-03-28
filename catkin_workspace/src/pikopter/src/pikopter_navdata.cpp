@@ -86,18 +86,18 @@ void PikopterNavdata::askMavrosRate() {
 */
 	//Configuration du stream all
 	sr_all.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL ;
-	sr_all.request.message_rate = (uint16_t)1 ;
+	sr_all.request.message_rate = (uint16_t)5 ;
 	sr_all.request.on_off = (uint8_t)1 ;
 
 	//COnfiguration du stream ext_status
-/*	sr_ext_status.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_EXTENDED_STATUS ;
+	sr_ext_status.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_EXTENDED_STATUS ;
 	sr_ext_status.message_rate = (uint16_t)1 ;
 	sr_ext_status.request.on_off = (uint8_t)1 ;
 
 	sr_position.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_POSITION ;
 	sr_position.message_rate = (uint16_t)5 ;
 	sr_position.request.on_off = (uint8_t)1 ;
-*/
+
 	// Call the service
 /*	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_DEBUG("Mavros rate asked");
 	else ROS_ERROR("Call on set_stream_rate service failed");
@@ -107,13 +107,13 @@ void PikopterNavdata::askMavrosRate() {
 	else ROS_ERROR("Call on set_stream_rate service failed");
 
 	//Call the service for put rate to stream ext_status at 1
-/*	if (ros:service::call("/mavros/set_stream_rate"), sr_ext_status)) ROS_DEBUG("Mavros rate asked") ;
+	if (ros:service::call("/mavros/set_stream_rate"), sr_ext_status)) ROS_DEBUG("Mavros rate asked") ;
 	else ROS_ERROR("Call on set_stream_rate service failed");
 
 	//Call the service for put rate to stream position at 5
 	if (ros:service::call("/mavros/set_stream_rate"), sr_position)) ROS_DEBUG("Mavros rate asked") ;
 	else ROS_ERROR("Call on set_stream_rate service failed");	
-*/
+
 }
 
 
