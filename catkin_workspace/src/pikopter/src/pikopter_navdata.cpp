@@ -74,17 +74,46 @@ void PikopterNavdata::askMavrosRate() {
 	}
 
 	// Create a StreamRate service handler to call the request
-	mavros_msgs::StreamRate sr;
+//	mavros_msgs::StreamRate sr;
+	mavros_msgs::StreamRate sr_all ;
+	mavros_msgs::StreamRate sr_ext_status ;
+	mavros_msgs::StreamRate sr_position ;
 
 	// TODO: Find the correct options to ask only what we need for the moment
-	sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
+/*	sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
 	sr.request.message_rate = (uint16_t)5;
 	sr.request.on_off = (uint8_t)1;
+*/
+	//Configuration du stream all
+	sr_all.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL ;
+	sr_all.request.message_rate = (uint16_t)1 ;
+	sr_all.request.on_off = (uint8_t)1 ;
 
+	//COnfiguration du stream ext_status
+/*	sr_ext_status.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_EXTENDED_STATUS ;
+	sr_ext_status.message_rate = (uint16_t)1 ;
+	sr_ext_status.request.on_off = (uint8_t)1 ;
+
+	sr_position.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_POSITION ;
+	sr_position.message_rate = (uint16_t)5 ;
+	sr_position.request.on_off = (uint8_t)1 ;
+*/
 	// Call the service
-	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_DEBUG("Mavros rate asked");
+/*	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_DEBUG("Mavros rate asked");
+	else ROS_ERROR("Call on set_stream_rate service failed");
+*/
+	//Call the service for put rate to all stream at 5
+	if (ros:service::call("/mavros/set_stream_rate"), sr_all)) ROS_DEBUG("Mavros rate asked") ;
 	else ROS_ERROR("Call on set_stream_rate service failed");
 
+	//Call the service for put rate to stream ext_status at 1
+/*	if (ros:service::call("/mavros/set_stream_rate"), sr_ext_status)) ROS_DEBUG("Mavros rate asked") ;
+	else ROS_ERROR("Call on set_stream_rate service failed");
+
+	//Call the service for put rate to stream position at 5
+	if (ros:service::call("/mavros/set_stream_rate"), sr_position)) ROS_DEBUG("Mavros rate asked") ;
+	else ROS_ERROR("Call on set_stream_rate service failed");	
+*/
 }
 
 
