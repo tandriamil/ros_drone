@@ -81,6 +81,8 @@ ExecuteCommand::ExecuteCommand() {
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
+
+	navdatas = nh.advertise<std_msgs::Bool>("cmd_received", 1000);
 }
 
 /**
@@ -305,6 +307,12 @@ void ExecuteCommand::slide_left(int* accel) {
 	velocity_pub.publish(msgMove);
 }
 
+void ExecuteCommand::cmd_received() {
+	std_msgs::Bool status;
+	status.data = true;
+	navdatas.publish(status);
+}
+
 /*!
  * \brief Parsing command
  *
@@ -330,6 +338,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	command.param4 = 0;
 	command.param5 = 0;
 
+	executeCommand.cmd_received();
 
 	if (!buf) return command;
 

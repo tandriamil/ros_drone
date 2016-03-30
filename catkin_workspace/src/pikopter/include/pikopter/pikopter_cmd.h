@@ -15,6 +15,7 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Bool.h"
 
 
 
@@ -54,7 +55,7 @@ class ExecuteCommand {
 		void slide_left(int* accel);
 		void slide_right(int* accel);
 		float* convertSpeedARDroneToRate(int* speed);
-		//float* getCurrentAltitude();
+		void cmd_received();
 
 	private:
 		ros::Subscriber state_sub;
@@ -67,6 +68,8 @@ class ExecuteCommand {
 		ros::Publisher attitude_pub;
 		geometry_msgs::TwistStamped msgMove;
 		geometry_msgs::PoseStamped msgAttitude;
+
+		ros::Publisher navdatas;
 };
 
 #endif
