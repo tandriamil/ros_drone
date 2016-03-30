@@ -9,6 +9,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/CommandLong.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/State.h>
 #include "geometry_msgs/TwistStamped.h"
@@ -61,6 +62,7 @@ class ExecuteCommand {
 		ros::ServiceClient set_mode_client;
 		ros::ServiceClient takeoff_client;
 		ros::ServiceClient land_client;
+		ros::ServiceClient command_long_client;
 		ros::Publisher velocity_pub;
 		ros::Publisher attitude_pub;
 		geometry_msgs::TwistStamped msgMove;
