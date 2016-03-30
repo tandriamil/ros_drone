@@ -125,7 +125,12 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
 	navdata_current.demo.ctrl_state = DEFAULT;
-	navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_DEMO_ARDRONE_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
+
+	// If in demo mode
+	if (demo_mode) navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_DEMO_ARDRONE_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
+
+	// If in normal mode
+	else navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_ARDRONE_STATE;
 
 	ROS_DEBUG("Navdata demo datas initialized to default values");
 
@@ -164,6 +169,9 @@ void PikopterNavdata::sendNavdata() {
 
 	// Copy the content of the navdata buffer
 	memcpy(tmp_buff, (void *)&navdata_current, PACKET_SIZE);
+
+	// Put the acknowledgment bit back to 0
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFDF;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -262,7 +270,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 
 	// If acceptable battery level
 	if ((remaining_battery <= 100) && (remaining_battery > CRITICAL_BATTERY_LIMIT))
-		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFBFFF;  // Bit ARDRONE_VBAT_LOW to 0
+		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFDF;  // Bit ARDRONE_VBAT_LOW to 0
 
 	// If critical level
 	else if ((remaining_battery > 0) && (remaining_battery < CRITICAL_BATTERY_LIMIT))
@@ -445,6 +453,24 @@ void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstP
 
 
 /*!
+ * \brief Get the acknowledgment of a cmd received
+ */
+void PikopterNavdata::handleCmdReceived(const std_msgs::Bool status) {
+
+	ROS_DEBUG("Command acknowledgment received");
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Put the command received acknowledgment bit mask to 1
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 0x20;
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+}
+
+
+/*!
  * \brief Main function
  *
  * \param argc The number of arguments
@@ -500,6 +526,9 @@ int main(int argc, char **argv) {
 
 	// Here we receive the state of the drone
 	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
+
+	// Here we receive the state of the drone
+	ros::Subscriber sub_pikopter_cmd_cmd_received = navdata_node_handle.subscribe("pikopter_cmd/cmd_received", SUB_BUF_SIZE_CMD_RECEIVED, &PikopterNavdata::handleCmdReceived, pn);
 
 	// We change the state of the navdata to say that it is sending navdatas
 	pn->setBitEndOfBootstrap();

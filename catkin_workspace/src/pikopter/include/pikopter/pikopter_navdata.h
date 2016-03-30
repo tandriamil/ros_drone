@@ -50,12 +50,13 @@
 #define NAVDATA_DISPLAY_RATE 1000
 
 // Subscribers' buffer size
-#define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 1
-#define SUB_BUF_SIZE_BATTERY 1
-#define SUB_BUF_SIZE_LOCAL_POS_GP_VEL 1
-#define SUB_BUF_SIZE_LOCAL_POS_POSE 1
-#define SUB_BUF_SIZE_EXTENDED_STATE 1
-#define SUB_BUF_SIZE_STATE 1
+#define SUB_BUF_SIZE_GLOBAL_POS_REL_ALT 10
+#define SUB_BUF_SIZE_BATTERY 10
+#define SUB_BUF_SIZE_LOCAL_POS_GP_VEL 10
+#define SUB_BUF_SIZE_LOCAL_POS_POSE 10
+#define SUB_BUF_SIZE_EXTENDED_STATE 10
+#define SUB_BUF_SIZE_STATE 10
+#define SUB_BUF_SIZE_CMD_RECEIVED 10
 
 
 /* ##### Specific to navdata (new constants) ##### */
@@ -76,6 +77,7 @@
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 #define DEFAULT_NAVDATA_DEMO_VISION false
 #define DEFAULT_NAVDATA_DEMO_ARDRONE_STATE 0x0400  // 1024 because only the 11th bit is at 1
+#define DEFAULT_NAVDATA_ARDRONE_STATE 0  // All the bits to 0
 
 
 
@@ -235,6 +237,7 @@ class PikopterNavdata {
 		void getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg);
 		void getState(const mavros_msgs::State::ConstPtr& msg);
 		void handleOrientation(const geometry_msgs::PoseStamped::ConstPtr& msg);
+		void handleCmdReceived(const std_msgs::Bool status);
 
 		// Accessors
 		bool inDemoMode();
