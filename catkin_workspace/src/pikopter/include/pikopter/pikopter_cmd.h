@@ -12,8 +12,11 @@
 #include <mavros_msgs/CommandLong.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/State.h>
-#include "geometry_msgs/TwistStamped.h"
-#include "geometry_msgs/PoseStamped.h"
+#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/GlobalPositionTarget.h>
+#include <mavros_msgs/AttitudeTarget.h>
+#include <geometry_msgs/Vector3.h>
 #include "std_msgs/Float64.h"
 #include "std_msgs/Bool.h"
 
@@ -66,10 +69,13 @@ class ExecuteCommand {
 		ros::ServiceClient command_long_client;
 		ros::Publisher velocity_pub;
 		ros::Publisher attitude_pub;
+		ros::Publisher setpoint_raw_pub;
+		ros::Publisher setpoint_att_raw_pub;
 		geometry_msgs::TwistStamped msgMove;
 		geometry_msgs::PoseStamped msgAttitude;
-
 		ros::Publisher navdatas;
+		mavros_msgs::GlobalPositionTarget msgRawPub;
+		mavros_msgs::AttitudeTarget msgAttRawPub;
 };
 
 #endif

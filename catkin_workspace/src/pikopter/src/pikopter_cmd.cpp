@@ -81,8 +81,9 @@ ExecuteCommand::ExecuteCommand() {
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
-
 	navdatas = nh.advertise<std_msgs::Bool>("pikopter_cmd/cmd_received", 1000);
+	setpoint_raw_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>("/mavros/setpoint_raw/global", 100);
+	setpoint_att_raw_pub = nh.advertise<mavros_msgs::AttitudeTarget>("/mavros/setpoint_raw/attitude", 100);
 }
 
 /**
@@ -220,11 +221,30 @@ bool ExecuteCommand::land() {
  * The minimum is 1 meter (0.1 * 10)
  */
 void ExecuteCommand::forward(int* accel) {
-	float* rate;
+	//float* rate;
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
-	velocity_pub.publish(msgMove);
+	//rate = convertSpeedARDroneToRate(accel);
+	// msgMove.header.frame_id = "1";
+	// msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
+	// msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
+	// msgRawPub.coordinate_frame = 5;
+	// msgRawPub.type_mask = 0xDC7;  // 110111000111;
+	// geometry_msgs::Vector3 vector;
+	// vector.y = 10.0f;
+	// vector.y = 10.0f;
+	// vector.y = 10.0f;
+	// msgRawPub.velocity = vector;
+
+	msgAttRawPub.type_mask = 128;
+	geometry_msgs::Vector3 vector;
+	vector.x = 1.0;
+	vector.y = 1.0;
+	vector.z = 1.0;
+	msgAttRawPub.body_rate = vector;
+	msgAttRawPub.thrust = 0;
+
+
+	setpoint_att_raw_pub.publish(msgAttRawPub);
 }
 
 /**
