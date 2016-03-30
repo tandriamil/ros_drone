@@ -13,4 +13,4 @@ rsync -e "ssh -i $PIKEYPATH" \
 --exclude="src/devel" \
 --exclude="src/pikopter/CMakeFiles" \
 catkin_workspace \
-pi@10.5.5.1:/home/pi/ros_drone
+pi@raspberrypi.local:/home/pi/ros_drone

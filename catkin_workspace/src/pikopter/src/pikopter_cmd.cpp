@@ -58,6 +58,8 @@ ExecuteCommand::ExecuteCommand() {
             ("mavros/cmd/takeoff");
     land_client = nh.serviceClient<mavros_msgs::CommandTOL>
     		("mavros/cmd/land");
+    command_long_client = nh.serviceClient<mavros_msgs::CommandLong>
+    		("mavros/cmd/command");
 
 
     ROS_INFO("Wait for land service");
@@ -72,10 +74,15 @@ ExecuteCommand::ExecuteCommand() {
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/cmd/arming");
 
+	ROS_INFO("Wait for commandLong service");
+	waitForService("mavros/cmd/command");
+
 
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
+
+	navdatas = nh.advertise<std_msgs::Bool>("cmd_received", 1000);
 }
 
 /**
@@ -251,32 +258,60 @@ void ExecuteCommand::up(int* accel) {
 }
 
 void ExecuteCommand::left(int* accel) {
-	// float* rate;
+	mavros_msgs::CommandLong srvCommand;
 
-	// rate = convertSpeedARDroneToRate(accel);
-	// tf2::Quaternion q;
-	// q.setRPY(0.0, 0.0, 5.0);
-	// float x = q.getAxis()[0];
-	// float y = q.getAxis()[1];
-	// float z = q.getAxis()[2];
-	// msgAttitude.pose.orientation.x = 0.0f;
-	// msgAttitude.pose.orientation.y = 0.0f;
-	// msgAttitude.pose.orientation.z = 2.0f;
-	// float w = 5.0f;
-	// msgAttitude.pose.orientation.w = w;
-	// ROS_INFO("Orientation x : %f", x);
-	// ROS_INFO("Orientation y : %f", y);
-	// ROS_INFO("Orientation z : %f", z);
-	// ROS_INFO("Orientation w : %f", w);
+	srvCommand.request.command = 115; // MAV_CMD_CONDITION_YAW
+	srvCommand.request.confirmation = 0;
+	srvCommand.request.param1 = 45.0;
+	srvCommand.request.param3 = -1.0;
+	srvCommand.request.param4 = 1.0;
 
-	// attitude_pub.publish(msgAttitude);
+	command_long_client.call(srvCommand);
+	if (srvCommand.response.success) {
+		ROS_INFO("Turn to left success");
+	} else {
+		ROS_ERROR("Unable to turn left");
+	}
 }
 
 void ExecuteCommand::right(int* accel) {
-	
+	mavros_msgs::CommandLong srvCommand;
+
+	srvCommand.request.command = 115; // MAV_CMD_CONDITION_YAW
+	srvCommand.request.confirmation = 0;
+	srvCommand.request.param1 = 45.0;
+	srvCommand.request.param3 = 1.0;
+	srvCommand.request.param4 = 1.0;
+
+	command_long_client.call(srvCommand);
+	if (srvCommand.response.success) {
+		ROS_INFO("Turn to right success");
+	} else {
+		ROS_ERROR("Unable to turn right");
+	}
 }
 
+void ExecuteCommand::slide_right(int* accel) {
+	float* rate;
 
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
+	velocity_pub.publish(msgMove);
+}
+
+void ExecuteCommand::slide_left(int* accel) {
+	float* rate;
+
+	rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
+	velocity_pub.publish(msgMove);
+}
+
+void ExecuteCommand::cmd_received() {
+	std_msgs::Bool status;
+	status.data = true;
+	navdatas.publish(status);
+}
 
 /*!
  * \brief Parsing command
@@ -303,6 +338,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	command.param4 = 0;
 	command.param5 = 0;
 
+	executeCommand.cmd_received();
 
 	if (!buf) return command;
 
@@ -369,6 +405,15 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
 					executeCommand.right(&p5);
+				}
+				else if((p1 == 1) && (p2 < 0) && !p3 && !p4 && !p5) {
+					fprintf(stderr, "%s\n","SLIDE_LEFT");
+					executeCommand.slide_left(&p2);
+				}
+				else if((p1 == 1) && (p2 > 0) && !p3 && !p4 && !p5) {
+					//CHECK IT
+					fprintf(stderr, "%s\n","SLIDE_RIGHT");
+					executeCommand.slide_right(&p2);
 				}
 				else {
 					fprintf(stderr,"received PCMD: %d,%d,%d,%d,%d,%d\n",seq,p1,p2,p3,p4,p5);

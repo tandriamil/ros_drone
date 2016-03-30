@@ -137,7 +137,12 @@ void PikopterNavdata::initNavdata() {
 	navdata_current.demo.vz = DEFAULT_NAVDATA_DEMO_VZ;
 	navdata_current.demo.vision_defined = DEFAULT_NAVDATA_DEMO_VISION;
 	navdata_current.demo.ctrl_state = DEFAULT;
-	navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_DEMO_ARDRONE_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
+
+	// If in demo mode
+	if (demo_mode) navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_DEMO_ARDRONE_STATE;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 1
+
+	// If in normal mode
+	else navdata_current.demo.ardrone_state = DEFAULT_NAVDATA_ARDRONE_STATE;
 
 	ROS_DEBUG("Navdata demo datas initialized to default values");
 
@@ -176,6 +181,9 @@ void PikopterNavdata::sendNavdata() {
 
 	// Copy the content of the navdata buffer
 	memcpy(tmp_buff, (void *)&navdata_current, PACKET_SIZE);
+
+	// Put the acknowledgment bit back to 0
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFDF;
 
 	/* ##### Exit Critical Section ##### */
 	navdata_mutex.unlock();
@@ -262,7 +270,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 	// Get the value of the battery
 	int remaining_battery = (int)(msg->remaining * BATTERY_PERCENTAGE);
 
-	ROS_DEBUG("Entered battery with value=%d", remaining_battery;
+	ROS_DEBUG("Entered battery with value=%d", remaining_battery);
 	//ROS_DEBUG("Entered battery with value=%d", (int)(msg->voltage / BATTERY_PERCENTAGE));
 
 	/* ##### Enter Critical Section ##### */
@@ -274,7 +282,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 
 	// If acceptable battery level
 	if ((remaining_battery <= 100) && (remaining_battery > CRITICAL_BATTERY_LIMIT))
-		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFBFFF;  // Bit ARDRONE_VBAT_LOW to 0
+		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFDF;  // Bit ARDRONE_VBAT_LOW to 0
 
 	// If critical level
 	else if ((remaining_battery > 0) && (remaining_battery < CRITICAL_BATTERY_LIMIT))
@@ -300,73 +308,101 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 	else if ((msg->vtol_state == 0) && (msg->landed_state == 0))
 		ROS_WARN("Strange state where the drone is considered as not flying nor landing.");
 
-	// Pour l'etat en vol
-	switch(msg->vtol_state)
-	{
-		navdata_current.demo.ctrl_state = FLY ;
-		
-		//Etat inconnue 
-		case mavros_msgs::ExtendedState::VTOL_STATE_UNDEFINED :
-		{	
-			navdata_current.demo.ctrl_state = DEFAULT ;
+
+	// Here the managment of the flying state
+	switch(msg->vtol_state) {
+
+		// Undefined state (this state can be used when the drone isn't flying but landed)
+		case mavros_msgs::ExtendedState::VTOL_STATE_UNDEFINED: {
+			// Nothing to do here I think
+		}
+
+		// When the drone is in transition forward
+		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_FW: {
 			
-			ROS_DEBUG("VTOL_STATE_UNDEFINED") ;
-		}
-		//Etat transition en avant
-		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_FW :
-		{
-			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_FW") ;
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 1;  // Bit ARDRONE_FLY_MASK to 1
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
 		}
 
-		//Etat de transition vers MC
-		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_MC :
-		{
-			ROS_DEBUG("VTOL_STATE_TRANSITION_TO_MC") ;
-		}
-
-		//Etat en MC??
-		case mavros_msgs::ExtendedState::VTOL_STATE_MC :
-		{
-			ROS_DEBUG("VTOL_STATE_MC") ;
-		}
-
-		//Etat en avant
-		case mavros_msgs::ExtendedState::VTOL_STATE_FW :
-		{
-			navdata_current.demo.ctrl_state = MOVE ;		
+		// ???
+		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_MC: {
 			
-			ROS_DEBUG("VTOL_STATE_FW") ;
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 1;  // Bit ARDRONE_FLY_MASK to 1
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
+		}
+
+		// ???
+		case mavros_msgs::ExtendedState::VTOL_STATE_MC: {
+
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 1;  // Bit ARDRONE_FLY_MASK to 1
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
+		}
+
+		// ???
+		case mavros_msgs::ExtendedState::VTOL_STATE_FW: {
+			
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 1;  // Bit ARDRONE_FLY_MASK to 1
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
 		}
 	}
 
+
 	// If landed
-	switch(msg->landed_state)
-	{
-		navdata_current.demo.ctrl_state = LAND ;
+	switch (msg->landed_state) {
 
-		//Etat inconnue
-		case mavros_msgs::ExtendedState::LANDED_STATE_UNDEFINED :
-		{
-			navdata_current.demo.ctrl_state = DEFAULT ;
-			ROS_DEBUG("LANDED_STATE_UNDEFINED") ;
+		// Undefined state (can be used when the drone isn't landed)
+		case mavros_msgs::ExtendedState::LANDED_STATE_UNDEFINED: {
+			// Nothing to do here I think
 		}
-		
-		case mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND :
-		{
-			//etat a terre (TAKEOFF_GROUND)
 
-			navdata_current.demo.ctrl_state = TAKEOFF ;
-			
-			ROS_DEBUG("LANDED_STATE_ON_GROUND") ;
+		// Drone is landed on the ground (based on which altitude he took off)
+		case mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND: {
+
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFFE;  // Bit ARDRONE_FLY_MASK to 0
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
 		}
-		
-		case mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR :
-		{
-			//...se pose ou décolage (TAKEOFF_AUTO)
 
-			navdata_current.demo.ctrl_state = TAKEOFF ;
-			
-			ROS_DEBUG("LANDED_STATE_IN_AIR") ;
+		// Drone is landed "in the air" (higher than its take off based altitude)
+		case mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR: {
+
+			/* ##### Enter Critical Section ##### */
+			navdata_mutex.lock();
+
+			// Put the flying bit mask
+			navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFFE;  // Bit ARDRONE_FLY_MASK to 0
+
+			/* ##### Exit Critical Section ##### */
+			navdata_mutex.unlock();
 		}
 	}
 
@@ -429,6 +465,24 @@ void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstP
 
 
 /*!
+ * \brief Get the acknowledgment of a cmd received
+ */
+void PikopterNavdata::handleCmdReceived(const std_msgs::Bool status) {
+
+	ROS_DEBUG("Command acknowledgment received");
+
+	/* ##### Enter Critical Section ##### */
+	navdata_mutex.lock();
+
+	// Put the command received acknowledgment bit mask to 1
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 0x20;
+
+	/* ##### Exit Critical Section ##### */
+	navdata_mutex.unlock();
+}
+
+
+/*!
  * \brief Main function
  *
  * \param argc The number of arguments
@@ -484,6 +538,9 @@ int main(int argc, char **argv) {
 
 	// Here we receive the state of the drone
 	ros::Subscriber sub_mavros_extended_state = navdata_node_handle.subscribe("mavros/extended_state", SUB_BUF_SIZE_EXTENDED_STATE, &PikopterNavdata::getExtendedState, pn);
+
+	// Here we receive the state of the drone
+	ros::Subscriber sub_pikopter_cmd_cmd_received = navdata_node_handle.subscribe("pikopter_cmd/cmd_received", SUB_BUF_SIZE_CMD_RECEIVED, &PikopterNavdata::handleCmdReceived, pn);
 
 	// We change the state of the navdata to say that it is sending navdatas
 	pn->setBitEndOfBootstrap();
