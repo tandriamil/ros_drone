@@ -250,7 +250,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 	// Get the value of the battery
 	int remaining_battery = (int)(msg->remaining * BATTERY_PERCENTAGE);
 
-	ROS_DEBUG("Entered battery with value=%d", remaining_battery;
+	ROS_DEBUG("Entered battery with value=%d", remaining_battery);
 	//ROS_DEBUG("Entered battery with value=%d", (int)(msg->voltage / BATTERY_PERCENTAGE));
 
 	/* ##### Enter Critical Section ##### */
