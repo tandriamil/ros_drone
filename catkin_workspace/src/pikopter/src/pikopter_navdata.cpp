@@ -74,16 +74,25 @@ void PikopterNavdata::askMavrosRate() {
 	}
 
 	// Create a StreamRate service handler to call the request
-	mavros_msgs::StreamRate sr;
+	mavros_msgs::StreamRate sr_ext_status ;
+	mavros_msgs::StreamRate sr_position ;
 
-	// TODO: Find the correct options to ask only what we need for the moment
-	sr.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_ALL;
-	sr.request.message_rate = (uint16_t)5;
-	sr.request.on_off = (uint8_t)1;
+	//COnfiguration du stream ext_status
+	sr_ext_status.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_EXTENDED_STATUS ;
+	sr_ext_status.request.message_rate = (uint16_t)1 ;
+	sr_ext_status.request.on_off = (uint8_t)1 ;
 
-	// Call the service
-	if (ros::service::call("/mavros/set_stream_rate", sr)) ROS_DEBUG("Mavros rate asked");
+	sr_position.request.stream_id = mavros_msgs::StreamRateRequest::STREAM_POSITION ;
+	sr_position.request.message_rate = (uint16_t)200 ;
+	sr_position.request.on_off = (uint8_t)1 ;
+
+	//Call the service for put rate to stream ext_status at 1
+	if (ros::service::call("/mavros/set_stream_rate", sr_ext_status)) ROS_DEBUG("Mavros rate asked") ;
 	else ROS_ERROR("Call on set_stream_rate service failed");
+
+	//Call the service for put rate to stream position at 5
+	if (ros::service::call("/mavros/set_stream_rate", sr_position)) ROS_DEBUG("Mavros rate asked") ;
+	else ROS_ERROR("Call on set_stream_rate service failed");	
 
 }
 
@@ -150,7 +159,7 @@ void PikopterNavdata::setBitEndOfBootstrap() {
 	// No critical section because it's still sequential until here
 
 	// Put the bit into the bitmask
-	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0x03FF;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 0
+	navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFF3FF;  // Bit ARDRONE_NAVDATA_BOOTSTRAP to 0
 
 }
 
@@ -228,7 +237,7 @@ void PikopterNavdata::display() {
 		navdata_mutex.lock();
 
 		ROS_DEBUG("\n");
-		ROS_DEBUG("Navdata n°%d\n", navdata_current.demo.sequence);
+		ROS_DEBUG("Navdata number %d\n", navdata_current.demo.sequence);
 		ROS_DEBUG("\t Header : %d\n", navdata_current.demo.header);
 		ROS_DEBUG("\t Tag : %d\n", navdata_current.demo.tag);
 		ROS_DEBUG("\t Mask : %d\n", navdata_current.demo.ardrone_state);
@@ -259,21 +268,19 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
 	int remaining_battery = (int)(msg->remaining * BATTERY_PERCENTAGE);
 
 	ROS_DEBUG("Entered battery with value=%d", remaining_battery);
-	//ROS_DEBUG("Entered battery with value=%d", (int)(msg->voltage / BATTERY_PERCENTAGE));
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
 
 	// Put the correct battery status then
 	navdata_current.demo.vbat_flying_percentage = (uint32_t)remaining_battery;
-	//navdata_current.demo.vbat_flying_percentage = (uint32_t)(msg->voltage / BATTERY_PERCENTAGE);
 
 	// If acceptable battery level
 	if ((remaining_battery <= 100) && (remaining_battery > CRITICAL_BATTERY_LIMIT))
 		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state & 0xFFFFFFDF;  // Bit ARDRONE_VBAT_LOW to 0
 
 	// If critical level
-	else if ((remaining_battery > 0) && (remaining_battery < CRITICAL_BATTERY_LIMIT))
+	else if ((remaining_battery > 0) && (remaining_battery <= CRITICAL_BATTERY_LIMIT))
 		navdata_current.demo.ardrone_state = navdata_current.demo.ardrone_state | 0x4000;  // Bit ARDRONE_VBAT_LOW to 1
 
 	// If incorrect value
@@ -290,11 +297,13 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
  */
 void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg) {
 
+	ROS_ERROR("Correctly entered getExtendedState");
+
 	// Check if we got strange states
 	if ((msg->vtol_state > 0) && (msg->landed_state > 0))
 		ROS_WARN("Strange state where the drone is considered as flying and landing at the same time. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
 	else if ((msg->vtol_state == 0) && (msg->landed_state == 0))
-		ROS_WARN("Strange state where the drone is considered as not flying nor landing.");
+		ROS_WARN("Strange state where the drone is considered as not flying nor landing. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
 
 
 	// Here the managment of the flying state
@@ -457,7 +466,7 @@ void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstP
  */
 void PikopterNavdata::handleCmdReceived(const std_msgs::Bool status) {
 
-	ROS_DEBUG("Command acknowledgment received");
+	ROS_ERROR("Command acknowledgment received");
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();

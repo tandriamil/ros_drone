@@ -56,7 +56,7 @@
 #define SUB_BUF_SIZE_LOCAL_POS_POSE 10
 #define SUB_BUF_SIZE_EXTENDED_STATE 10
 #define SUB_BUF_SIZE_STATE 10
-#define SUB_BUF_SIZE_CMD_RECEIVED 10
+#define SUB_BUF_SIZE_CMD_RECEIVED 100
 
 
 /* ##### Specific to navdata (new constants) ##### */
@@ -65,7 +65,7 @@
 #define CRITICAL_BATTERY_LIMIT 10  // 10%
 
 // Default values of the navdata demo buffer
-#define DEFAULT_NAVDATA_DEMO_SEQUENCE 1
+#define DEFAULT_NAVDATA_DEMO_SEQUENCE 0
 #define DEFAULT_NAVDATA_DEMO_HEADER 88776655
 #define DEFAULT_NAVDATA_DEMO_VBAT_FLYING_PERCENTAGE 100
 #define DEFAULT_NAVDATA_DEMO_ALTITUDE 0
@@ -76,7 +76,7 @@
 #define DEFAULT_NAVDATA_DEMO_VY 0
 #define DEFAULT_NAVDATA_DEMO_VZ 0
 #define DEFAULT_NAVDATA_DEMO_VISION false
-#define DEFAULT_NAVDATA_DEMO_ARDRONE_STATE 0x0400  // 1024 because only the 11th bit is at 1
+#define DEFAULT_NAVDATA_DEMO_ARDRONE_STATE 0x400  // 1024 because only the 11th bit is at 1
 #define DEFAULT_NAVDATA_ARDRONE_STATE 0  // All the bits to 0
 
 
