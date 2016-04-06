@@ -11,14 +11,12 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandLong.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/State.h>
-#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <mavros_msgs/GlobalPositionTarget.h>
-#include <mavros_msgs/AttitudeTarget.h>
 #include <geometry_msgs/Vector3.h>
+#include <mavros_msgs/PositionTarget.h>
 #include "std_msgs/Float64.h"
 #include "std_msgs/Bool.h"
+#include <cmath>
 
 
 
@@ -49,33 +47,28 @@ class ExecuteCommand {
 		ExecuteCommand();
 		bool takeoff();
 		bool land();
-		void forward(int* accel);
-		void backward(int* accel);
-		void down(int* accel);
-		void up(int* accel);
-		void left(int* accel);
-		void right(int* accel);
-		void slide_left(int* accel);
-		void slide_right(int* accel);
-		float* convertSpeedARDroneToRate(int* speed);
+		void forward(int accel);
+		void backward(int accel);
+		void down(int accel);
+		void up(int accel);
+		void left(int accel);
+		void right(int accel);
+		void slide_left(int accel);
+		void slide_right(int accel);
+		float convertSpeedARDroneToRate(int speed);
 		void cmd_received();
 
 	private:
-		ros::Subscriber state_sub;
 		ros::ServiceClient arming_client;
 		ros::ServiceClient set_mode_client;
 		ros::ServiceClient takeoff_client;
 		ros::ServiceClient land_client;
 		ros::ServiceClient command_long_client;
 		ros::Publisher velocity_pub;
-		ros::Publisher attitude_pub;
 		ros::Publisher setpoint_raw_pub;
-		ros::Publisher setpoint_att_raw_pub;
-		geometry_msgs::TwistStamped msgMove;
-		geometry_msgs::PoseStamped msgAttitude;
 		ros::Publisher navdatas;
-		mavros_msgs::GlobalPositionTarget msgRawPub;
-		mavros_msgs::AttitudeTarget msgAttRawPub;
+		geometry_msgs::TwistStamped msgMove;
+		mavros_msgs::PositionTarget msgPosRawPub;
 };
 
 #endif

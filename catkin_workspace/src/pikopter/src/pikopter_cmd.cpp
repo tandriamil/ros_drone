@@ -7,7 +7,6 @@ using namespace std;
 //char *STATION_IP = NULL;
 static struct sockaddr_in addr_drone;
 int comfd = 0; // in read mode -- receive command
-mavros_msgs::State current_state;
 
 typedef struct command {
 	string cmd;
@@ -22,10 +21,6 @@ typedef struct command {
 
 
 /* Functions */
-
-void state_cb(const mavros_msgs::State::ConstPtr& msg){
-    current_state = *msg;
-}
 
 /**
  * Wait for any custom or mavros service passed in parameter during a fixed timeout.
@@ -48,8 +43,6 @@ void waitForService(const std::string service) {
  */
 ExecuteCommand::ExecuteCommand() {
 	ros::NodeHandle nh;
-	state_sub = nh.subscribe<mavros_msgs::State>
-            ("mavros/state", 10, state_cb);
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("mavros/cmd/arming");
     set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
@@ -80,10 +73,8 @@ ExecuteCommand::ExecuteCommand() {
 
 
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
-	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
 	navdatas = nh.advertise<std_msgs::Bool>("pikopter_cmd/cmd_received", 1000);
-	setpoint_raw_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>("/mavros/setpoint_raw/global", 100);
-	setpoint_att_raw_pub = nh.advertise<mavros_msgs::AttitudeTarget>("/mavros/setpoint_raw/attitude", 100);
+	setpoint_raw_pub = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 100);
 }
 
 /**
@@ -92,55 +83,60 @@ ExecuteCommand::ExecuteCommand() {
  * If the rate is positive it is a forward.
  * Otherwise it is a backward.
  */
-float* ExecuteCommand::convertSpeedARDroneToRate(int* speed) {
-	float* rate;
-	switch(*speed) {
+float ExecuteCommand::convertSpeedARDroneToRate(int speed) {
+	float rateConvert = 0;
+	ROS_INFO("Receiving value speed : %d", speed);
+	switch(speed) {
 		case 1028443341 : 
-			*rate = 0.05;
+			rateConvert = 0.05;
 			break;
 		case 1036831949 :
-			*rate = 0.1;
+			rateConvert = 0.1;
 			break;
 		case 1045220557 :
-			*rate = 0.2;
+			rateConvert = 0.2;
 			break;
 		case 1048576000 :
-			*rate = 0.25;
+			rateConvert = 0.25;
 			break;
 		case 1056964608 :
-			*rate = 0.5;
+			rateConvert = 0.5;
 			break;
 		case 1061158912 :
-			*rate = 0.75;
+			rateConvert = 0.75;
 			break;
 		case 1065353216 :
-			*rate = 1.0;
+			rateConvert = 1.0;
 			break;
 		case -1119040307 :
-			*rate = -0.05;
+			rateConvert = -0.05;
 			break;
 		case -1110651699 :
-			*rate = -0.1;
+			rateConvert = -0.1;
 			break;
 		case -1102263091 :
-			*rate = -0.2;
+			rateConvert = -0.2;
 			break;
 		case -1098907648 :
-			*rate = -0.25;
+			rateConvert = -0.25;
 			break;
 		case -1090519040 :
-			*rate = -0.5;
+			rateConvert = -0.5;
 			break;
 		case -1086324736 :
-			*rate = -0.75;
+			rateConvert = -0.75;
 			break;
 		case -1082130432 :
-			*rate = -1.0;
+			rateConvert = -1.0;
 			break;
 		default :
+			rateConvert = 0.0;
+			ROS_ERROR("Problem when converting rate");
+			ROS_INFO("Received : %d", speed);
+			ROS_INFO("Please relaunch the command or script");
 			break;
 	}
-	return rate;
+	return rateConvert;
 }
 
 // float* ExecuteCommand::getCurrentAltitude() {
@@ -220,31 +216,20 @@ bool ExecuteCommand::land() {
  * With this rate we multiply by 10 so the maximum forward movement that we can received is 10 meters (1.0 * 10).
  * The minimum is 1 meter (0.1 * 10)
  */
-void ExecuteCommand::forward(int* accel) {
-	//float* rate;
+void ExecuteCommand::forward(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
 
-	//rate = convertSpeedARDroneToRate(accel);
-	// msgMove.header.frame_id = "1";
-	// msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
-	// msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
-	// msgRawPub.coordinate_frame = 5;
-	// msgRawPub.type_mask = 0xDC7;  // 110111000111;
-	// geometry_msgs::Vector3 vector;
-	// vector.y = 10.0f;
-	// vector.y = 10.0f;
-	// vector.y = 10.0f;
-	// msgRawPub.velocity = vector;
+	msgPosRawPub.coordinate_frame = 8; // FRAME_BODY_NED
+	msgPosRawPub.type_mask = 0xFC7;
 
-	msgAttRawPub.type_mask = 128;
 	geometry_msgs::Vector3 vector;
-	vector.x = 1.0;
-	vector.y = 1.0;
-	vector.z = 1.0;
-	msgAttRawPub.body_rate = vector;
-	msgAttRawPub.thrust = 0;
 
+	vector.x = (rate) * ((float) MAX_SPEED_CMD) * (-1.0);
+	vector.y = 0.0;
+	vector.z = 0.0;
 
-	setpoint_att_raw_pub.publish(msgAttRawPub);
+	msgPosRawPub.velocity = vector;
+	setpoint_raw_pub.publish(msgPosRawPub);
 }
 
 /**
@@ -253,36 +238,42 @@ void ExecuteCommand::forward(int* accel) {
  * With this rate we multiply by 10 so the maximum backward movement that we can received is 10 meters (-1.0 * 10).
  * The minimum is 1 meter (-0.1 * 10)
  */
-void ExecuteCommand::backward(int* accel) {
-	float* rate;
+void ExecuteCommand::backward(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.x = (*rate * MAX_SPEED_CMD) * (-1);
+	msgPosRawPub.coordinate_frame = 8; // FRAME_BODY_NED
+	msgPosRawPub.type_mask = 0xFC7;
+
+	geometry_msgs::Vector3 vector;
+
+	vector.x = (rate) * (MAX_SPEED_CMD) * (-1.0);
+	vector.y = 0.0;
+	vector.z = 0.0;
+
+	msgPosRawPub.velocity = vector;
+	setpoint_raw_pub.publish(msgPosRawPub);
+}
+
+void ExecuteCommand::down(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.z = (rate) * (RATIO_Z);
 	velocity_pub.publish(msgMove);
 }
 
-void ExecuteCommand::down(int* accel) {
-	float* rate;
-
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.z = (*rate * RATIO_Z);
+void ExecuteCommand::up(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
+	msgMove.twist.linear.z = (rate) * (RATIO_Z);
 	velocity_pub.publish(msgMove);
 }
 
-void ExecuteCommand::up(int* accel) {
-	float* rate;
+void ExecuteCommand::left(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.z = *rate * RATIO_Z;
-	velocity_pub.publish(msgMove);
-}
-
-void ExecuteCommand::left(int* accel) {
 	mavros_msgs::CommandLong srvCommand;
 
 	srvCommand.request.command = 115; // MAV_CMD_CONDITION_YAW
 	srvCommand.request.confirmation = 0;
-	srvCommand.request.param1 = 45.0;
+	srvCommand.request.param1 = abs((rate) * ((float) MAX_VEL_TURN_CMD));
 	srvCommand.request.param3 = -1.0;
 	srvCommand.request.param4 = 1.0;
 
@@ -294,12 +285,14 @@ void ExecuteCommand::left(int* accel) {
 	}
 }
 
-void ExecuteCommand::right(int* accel) {
+void ExecuteCommand::right(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
+
 	mavros_msgs::CommandLong srvCommand;
 
 	srvCommand.request.command = 115; // MAV_CMD_CONDITION_YAW
 	srvCommand.request.confirmation = 0;
-	srvCommand.request.param1 = 45.0;
+	srvCommand.request.param1 = abs((rate) * ((float) MAX_VEL_TURN_CMD));
 	srvCommand.request.param3 = 1.0;
 	srvCommand.request.param4 = 1.0;
 
@@ -311,20 +304,36 @@ void ExecuteCommand::right(int* accel) {
 	}
 }
 
-void ExecuteCommand::slide_right(int* accel) {
-	float* rate;
+void ExecuteCommand::slide_right(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
-	velocity_pub.publish(msgMove);
+	msgPosRawPub.coordinate_frame = 8; // FRAME_BODY_NED
+	msgPosRawPub.type_mask = 0xFC7;
+
+	geometry_msgs::Vector3 vector;
+
+	vector.x = 0.0;
+	vector.y = (rate) * (MAX_SPEED_CMD) * (-1.0);
+	vector.z = 0.0;
+
+	msgPosRawPub.velocity = vector;
+	setpoint_raw_pub.publish(msgPosRawPub);
 }
 
-void ExecuteCommand::slide_left(int* accel) {
-	float* rate;
+void ExecuteCommand::slide_left(int accel) {
+	float rate = convertSpeedARDroneToRate(accel);
 
-	rate = convertSpeedARDroneToRate(accel);
-	msgMove.twist.linear.y = (*rate * MAX_SPEED_CMD) * (-1);
-	velocity_pub.publish(msgMove);
+	msgPosRawPub.coordinate_frame = 8; // FRAME_BODY_NED
+	msgPosRawPub.type_mask = 0xFC7;
+
+	geometry_msgs::Vector3 vector;
+
+	vector.x = 0.0;
+	vector.y = (rate) * (MAX_SPEED_CMD) * (-1.0);
+	vector.z = 0.0;
+
+	msgPosRawPub.velocity = vector;
+	setpoint_raw_pub.publish(msgPosRawPub);
 }
 
 /*
@@ -407,36 +416,36 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 			if(p1 || p2 || p3 || p4 || p5) {
 				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5){
 					fprintf(stderr, "%s\n","FORWARD");
-					executeCommand.forward(&p3);
+					executeCommand.forward(p3);
 				}
 				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5) {
 					fprintf(stderr, "%s\n","BACKWARD");
-					executeCommand.backward(&p3);
+					executeCommand.backward(p3);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5) {
 					fprintf(stderr, "%s\n","DOWN");
-					executeCommand.down(&p4);
+					executeCommand.down(p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5) {
 					fprintf(stderr, "%s\n","UP");
-					executeCommand.up(&p4);
+					executeCommand.up(p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0)) {
 					fprintf(stderr, "%s\n","LEFT");
-					executeCommand.left(&p5);
+					executeCommand.left(p5);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
-					executeCommand.right(&p5);
+					executeCommand.right(p5);
 				}
 				else if((p1 == 1) && (p2 < 0) && !p3 && !p4 && !p5) {
 					fprintf(stderr, "%s\n","SLIDE_LEFT");
-					executeCommand.slide_left(&p2);
+					executeCommand.slide_left(p2);
 				}
 				else if((p1 == 1) && (p2 > 0) && !p3 && !p4 && !p5) {
 					//CHECK IT
 					fprintf(stderr, "%s\n","SLIDE_RIGHT");
-					executeCommand.slide_right(&p2);
+					executeCommand.slide_right(p2);
 				}
 				else {
 					fprintf(stderr,"received PCMD: %d,%d,%d,%d,%d,%d\n",seq,p1,p2,p3,p4,p5);
