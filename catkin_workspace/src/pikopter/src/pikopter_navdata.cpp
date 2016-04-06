@@ -297,6 +297,8 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
  */
 void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg) {
 
+	ROS_ERROR("Correctly entered getExtendedState");
+
 	// Check if we got strange states
 	if ((msg->vtol_state > 0) && (msg->landed_state > 0))
 		ROS_WARN("Strange state where the drone is considered as flying and landing at the same time. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
@@ -464,7 +466,7 @@ void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstP
  */
 void PikopterNavdata::handleCmdReceived(const std_msgs::Bool status) {
 
-	ROS_DEBUG("Command acknowledgment received");
+	ROS_ERROR("Command acknowledgment received");
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();

@@ -82,7 +82,7 @@ ExecuteCommand::ExecuteCommand() {
 	velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 	attitude_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_velocity/attitude", 100);
 
-	navdatas = nh.advertise<std_msgs::Bool>("cmd_received", 1000);
+	navdatas = nh.advertise<std_msgs::Bool>("pikopter_cmd/cmd_received", 1000);
 }
 
 /**
@@ -338,8 +338,6 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	command.param4 = 0;
 	command.param5 = 0;
 
-	executeCommand.cmd_received();
-
 	if (!buf) return command;
 
 	// use sscan to parse the command
@@ -356,6 +354,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 		case 290718208:
 			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n", "DECOLLAGE");
+				executeCommand.cmd_received();
 				executeCommand.takeoff();
 			}
 			break;
@@ -363,17 +362,21 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 		case 290717696:
 			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n","ATTERRISSAGE");
+				executeCommand.cmd_received();
 				executeCommand.land();
 			}
 			break;
 
 		case 290717952:
-			if(tcmd != ptcmd)
+			if(tcmd != ptcmd) {
 				fprintf(stderr, "%s\n","EMERGENCY");
+				executeCommand.cmd_received();
+			}
 			break;
 
 		default:
 			fprintf(stderr, "%s\n","UNKNOWN");
+			executeCommand.cmd_received();
 			break;
 		}
 		command.cmd = "AT*REF";
@@ -384,35 +387,43 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 			if(p1 || p2 || p3 || p4 || p5) {
 				if ((p1 == 1) && !p2 && (p3 < 0) && !p4 && !p5){
 					fprintf(stderr, "%s\n","FORWARD");
+					executeCommand.cmd_received();
 					executeCommand.forward(&p3);
 				}
 				else if((p1 == 1) && !p2 && (p3 > 0) && !p4 && !p5) {
 					fprintf(stderr, "%s\n","BACKWARD");
+					executeCommand.cmd_received();
 					executeCommand.backward(&p3);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 < 0) && !p5) {
 					fprintf(stderr, "%s\n","DOWN");
+					executeCommand.cmd_received();
 					executeCommand.down(&p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && (p4 > 0) && !p5) {
 					fprintf(stderr, "%s\n","UP");
+					executeCommand.cmd_received();
 					executeCommand.up(&p4);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 < 0)) {
 					fprintf(stderr, "%s\n","LEFT");
+					executeCommand.cmd_received();
 					executeCommand.left(&p5);
 				}
 				else if((p1 == 1) && !p2 && !p3 && !p4 && (p5 > 0)) {
 					fprintf(stderr, "%s\n","RIGHT");
+					executeCommand.cmd_received();
 					executeCommand.right(&p5);
 				}
 				else if((p1 == 1) && (p2 < 0) && !p3 && !p4 && !p5) {
 					fprintf(stderr, "%s\n","SLIDE_LEFT");
+					executeCommand.cmd_received();
 					executeCommand.slide_left(&p2);
 				}
 				else if((p1 == 1) && (p2 > 0) && !p3 && !p4 && !p5) {
 					//CHECK IT
 					fprintf(stderr, "%s\n","SLIDE_RIGHT");
+					executeCommand.cmd_received();
 					executeCommand.slide_right(&p2);
 				}
 				else {
