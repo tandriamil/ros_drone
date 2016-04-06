@@ -56,7 +56,7 @@
 #define SUB_BUF_SIZE_LOCAL_POS_POSE 10
 #define SUB_BUF_SIZE_EXTENDED_STATE 10
 #define SUB_BUF_SIZE_STATE 10
-#define SUB_BUF_SIZE_CMD_RECEIVED 10
+#define SUB_BUF_SIZE_CMD_RECEIVED 100
 
 
 /* ##### Specific to navdata (new constants) ##### */

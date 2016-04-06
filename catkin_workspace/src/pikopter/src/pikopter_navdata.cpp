@@ -303,7 +303,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 	if ((msg->vtol_state > 0) && (msg->landed_state > 0))
 		ROS_WARN("Strange state where the drone is considered as flying and landing at the same time. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
 	else if ((msg->vtol_state == 0) && (msg->landed_state == 0))
-		ROS_WARN("Strange state where the drone is considered as not flying nor landing.");
+		ROS_WARN("Strange state where the drone is considered as not flying nor landing. vtol_state = %d and landed_state = %d", msg->vtol_state, msg->landed_state);
 
 
 	// Here the managment of the flying state
