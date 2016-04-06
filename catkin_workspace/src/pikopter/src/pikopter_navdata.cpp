@@ -297,7 +297,7 @@ void PikopterNavdata::handleBattery(const mavros_msgs::BatteryStatus::ConstPtr& 
  */
 void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPtr& msg) {
 
-	ROS_ERROR("Correctly entered getExtendedState");
+	ROS_DEBUG("Correctly entered getExtendedState");
 
 	// Check if we got strange states
 	if ((msg->vtol_state > 0) && (msg->landed_state > 0))
@@ -466,7 +466,7 @@ void PikopterNavdata::handleOrientation(const geometry_msgs::PoseStamped::ConstP
  */
 void PikopterNavdata::handleCmdReceived(const std_msgs::Bool status) {
 
-	ROS_ERROR("Command acknowledgment received");
+	ROS_DEBUG("Command acknowledgment received");
 
 	/* ##### Enter Critical Section ##### */
 	navdata_mutex.lock();
