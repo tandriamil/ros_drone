@@ -43,6 +43,11 @@
 
 
 /* ##### Specific to navdata ros parameters ##### */
+// For the stream rate requests
+#define SR_REQUEST_ON (uint8_t)1
+#define SR_REQUEST_EXTENDED_STATE_RATE (uint16_t)1
+#define SR_REQUEST_POSITION_RATE (uint16_t)200
+
 // Loop rate in hertz
 // For ArDrone, in demo mode it's 15Hz and in normal mode it's 200Hz
 #define NAVDATA_DEMO_LOOP_RATE 15
