@@ -22,9 +22,9 @@
 		> l.land()
 
 	La liste des commandes qui fonctionnent pour le moment :
-		- takeoff
-		- land
-		- up
-		- down
-		- forward
-		- backward
+		- takeoff()
+		- land()
+		- up(int speed)
+		- down(int speed)
+		- forward(int speed)
+		- backward(int speed)
