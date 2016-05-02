@@ -8,20 +8,21 @@
 #include "stdlib.h"
 #include "stdint.h"
 #include "unistd.h"
-#include "sys/socket.h"
-#include "arpa/inet.h"
 #include "errno.h"
 #include "string.h"
-#include "sys/types.h"
 #include "time.h"
 #include "limits.h"
 #include "pthread.h"
-#include "sys/uio.h"
-#include "netinet/in.h"
 #include "netdb.h"
 #include "sstream"
-#include "std_msgs/String.h"
 #include "mutex"
+#include "arpa/inet.h"
+#include "netinet/in.h"
+#include "sys/socket.h"
+#include "sys/uio.h"
+#include "sys/types.h"
+#include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 
 // Ros librairies in order to use them
 #include "ros/ros.h"
@@ -31,6 +32,7 @@
 // TF2 utilies for the Quaternion managment
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Transform.h"
 
 
 
