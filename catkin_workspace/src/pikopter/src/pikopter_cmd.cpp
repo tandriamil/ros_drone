@@ -2,10 +2,6 @@
 
 using namespace std;
 
-namespace {
-	const double pi = 3.14159265358979323846;
-}
-
 /* Declarations */
 //char *STATION_IP = NULL;
 static struct sockaddr_in addr_drone;
@@ -27,7 +23,6 @@ typedef struct command {
 
 /**
  * Wait for any custom or mavros service passed in parameter during a fixed timeout.
- *
  */
 void waitForService(const std::string service) {
 	bool mavros_available = ros::service::waitForService(service, MAVROS_WAIT_TIMEOUT);
@@ -142,27 +137,22 @@ float ExecuteCommand::convertSpeedARDroneToRate(int speed) {
 	return rateConvert;
 }
 
-// float* ExecuteCommand::getCurrentAltitude() {
-// 	return 0.0;
-// }
-
 /**
  * Takeoff command.
  * First, it will change mode to GUIDED mode.
  * Then it will arm the wehicle.
- * By default the altitude reached after taking off is 50 (meters).
+ * By default the altitude reached after taking off is 10 (meters).
  * If change mode or arming vehicle failed it will return false.
  * Otherwise if the vehicle has taken off it will return true.
  */
 bool ExecuteCommand::takeoff() {
-	ROS_INFO("Takeoff asked");
 	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
 	mavros_msgs::CommandBool srvArmed;
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	srvTakeOffLand.request.altitude = 10;
+	srvTakeOffLand.request.altitude = 2;
 	srvArmed.request.value = true;
 
 	set_mode_client.call(srvGuided);
@@ -257,18 +247,28 @@ void ExecuteCommand::backward(int accel) {
 	setpoint_raw_pub.publish(msgPosRawPub);
 }
 
+/**
+ * Allows drone to go down
+ */
 void ExecuteCommand::down(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 	msgMove.twist.linear.z = (rate) * (RATIO_Z);
 	velocity_pub.publish(msgMove);
 }
 
+/**
+ * Allows drone to go up
+ */
 void ExecuteCommand::up(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 	msgMove.twist.linear.z = (rate) * (RATIO_Z);
 	velocity_pub.publish(msgMove);
 }
 
+/*
+ * Turn to left
+ * Maximum : 45 degrees
+ */
 void ExecuteCommand::left(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 
@@ -288,6 +288,10 @@ void ExecuteCommand::left(int accel) {
 	}
 }
 
+/*
+ * Turn to right
+ * Maximum : 45 degrees
+ */
 void ExecuteCommand::right(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 
@@ -307,6 +311,11 @@ void ExecuteCommand::right(int accel) {
 	}
 }
 
+/**
+ * Slide to right.
+ * Minimum : 1 meter
+ * Maximum : 10 meters
+ */
 void ExecuteCommand::slide_right(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 
@@ -323,6 +332,11 @@ void ExecuteCommand::slide_right(int accel) {
 	setpoint_raw_pub.publish(msgPosRawPub);
 }
 
+/**
+ * Slide to left.
+ * Minimum : 1 meter
+ * Maximum : 10 meters
+ */
 void ExecuteCommand::slide_left(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
 
@@ -340,7 +354,7 @@ void ExecuteCommand::slide_left(int accel) {
 }
 
 /*
- * 
+ * Acknowledgement which allows to send signal to navdatas that a command is sending to the drone
  */
 void ExecuteCommand::cmd_received() {
 	std_msgs::Bool status;
