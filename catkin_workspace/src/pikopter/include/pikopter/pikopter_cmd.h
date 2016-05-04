@@ -43,7 +43,6 @@ class PikopterCmd {
 };
 
 class ExecuteCommand {
-
 	public:
 		ExecuteCommand();
 		bool takeoff();
