@@ -43,7 +43,6 @@ class PikopterCmd {
 };
 
 class ExecuteCommand {
-
 	public:
 		ExecuteCommand();
 		bool takeoff();
@@ -67,7 +66,6 @@ class ExecuteCommand {
 		ros::ServiceClient command_long_client;
 		ros::Publisher velocity_pub;
 		ros::Publisher setpoint_raw_pub;
-		ros::Publisher attitude_pub;
 		ros::Publisher navdatas;
 		geometry_msgs::TwistStamped msgMove;
 		mavros_msgs::PositionTarget msgPosRawPub;
