@@ -29,7 +29,7 @@
 		<param name="ip" type="str" value="$(arg client_ip)" />
 	</node>
 
-	<node pkg="pikopter" type="pikopter_cmd" name="pikopter_cmd" output="screen">
+	<node pkg="pikopter" type="pikopter_cmd_simul" name="pikopter_cmd_simul" output="screen">
 		<param name="ip" type="str" value="$(arg client_ip)" />
 	</node>
 </launch>

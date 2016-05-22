@@ -154,7 +154,7 @@ bool ExecuteCommand::takeoff() {
 
 	srvGuided.request.custom_mode = "GUIDED";
 	srvGuided.request.base_mode = 0;
-	srvTakeOffLand.request.altitude = 1;
+	srvTakeOffLand.request.altitude = 5;
 	srvArmed.request.value = true;
 
 	set_mode_client.call(srvGuided);
@@ -164,6 +164,8 @@ bool ExecuteCommand::takeoff() {
 		ROS_ERROR("Unable to set mode to GUIDED");
 		return false;
 	}
+	
+	sleep(1);
 
 	arming_client.call(srvArmed);
     if (srvArmed.response.success) {
@@ -172,6 +174,8 @@ bool ExecuteCommand::takeoff() {
     	ROS_ERROR("Unable to arm drone");
 		return false;
 	}
+
+	sleep(1);
 
     takeoff_client.call(srvTakeOffLand);
 	if (srvTakeOffLand.response.success) {
@@ -208,8 +212,6 @@ bool ExecuteCommand::land() {
 /**
  * Forward command.
  * Given an int corresponding to forward/backaward movement (sent by Jakopter), convert this int to a rate.
- * With this rate we multiply by 10 so the maximum forward movement that we can received is 10 meters (1.0 * 10).
- * The minimum is 1 meter (0.1 * 10)
  */
 void ExecuteCommand::forward(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
@@ -230,8 +232,6 @@ void ExecuteCommand::forward(int accel) {
 /**
  * Backward command.
  * Given an int corresponding to forward/backward movement (sent by Jakopter), convert this int to a rate.
- * With this rate we multiply by 10 so the maximum backward movement that we can received is 10 meters (-1.0 * 10).
- * The minimum is 1 meter (-0.1 * 10)
  */
 void ExecuteCommand::backward(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);
@@ -315,8 +315,6 @@ void ExecuteCommand::right(int accel) {
 
 /**
  * Slide to right.
- * Minimum : 1 meter
- * Maximum : 10 meters
  */
 void ExecuteCommand::slide_right(int accel) {
 	float rate = convertSpeedARDroneToRate(accel);

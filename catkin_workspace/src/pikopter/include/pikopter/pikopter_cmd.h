@@ -23,7 +23,7 @@
 /* ################################### CONSTANTS ################################### */
 // The port used for the commands
 #define PORT_CMD 5556
-#define MAX_SPEED_CMD 10
+#define MAX_SPEED_CMD 3
 #define MAX_VEL_TURN_CMD 45
 
 

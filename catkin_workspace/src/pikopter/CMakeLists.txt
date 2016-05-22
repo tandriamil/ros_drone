@@ -139,10 +139,12 @@ add_library(pikopter_network src/pikopter_network.cpp)
 ## target_link_libraries(listener ${catkin_LIBRARIES})
 
 add_executable(pikopter_cmd src/pikopter_cmd.cpp)
+add_executable(pikopter_cmd_simul src/pikopter_cmd_simul.cpp)
 add_executable(pikopter_navdata src/pikopter_navdata.cpp)
 #add_executable(pikopter_test_takeoff src/pikopter_test_takeoff.cpp)
 
 target_link_libraries(pikopter_cmd ${catkin_LIBRARIES} pikopter_network)
+target_link_libraries(pikopter_cmd_simul ${catkin_LIBRARIES} pikopter_network)
 target_link_libraries(pikopter_navdata ${catkin_LIBRARIES} pikopter_network)
 #target_link_libraries(pikopter_test_takeoff ${catkin_LIBRARIES})
 
