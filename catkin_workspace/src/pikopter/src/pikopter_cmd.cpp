@@ -62,7 +62,7 @@ ExecuteCommand::ExecuteCommand() {
 
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/set_mode");
-	
+
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/cmd/arming");
 
@@ -86,7 +86,7 @@ float ExecuteCommand::convertSpeedARDroneToRate(int speed) {
 	float rateConvert = 0;
 	ROS_INFO("Receiving value speed : %d", speed);
 	switch(speed) {
-		case 1028443341 : 
+		case 1028443341 :
 			rateConvert = 0.05;
 			break;
 		case 1036831949 :
@@ -164,7 +164,7 @@ bool ExecuteCommand::takeoff() {
 		ROS_ERROR("Unable to set mode to GUIDED");
 		return false;
 	}
-	
+
 	sleep(1);
 
 	arming_client.call(srvArmed);
@@ -373,7 +373,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	Command command;
 	char cmd[PACKET_SIZE];
 	int seq, tcmd, p1, p2, p3, p4, p5;
-	
+
 	static int pseq, ptcmd = 0, pp1 = 0, pp2 = 0, pp3 = 0, pp4 = 0, pp5 = 0;
 
 	//AT*FTRIM=7
@@ -476,7 +476,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 		pp1 = p1; pp2= p2; pp3= p3; pp4= p4; pp5= p5;
 		command.cmd = "AT*PCMD";
 	}
-	
+
 	ptcmd = tcmd;
 
 	command.seq = seq;
@@ -486,7 +486,7 @@ Command parseCommand(char *buf, ExecuteCommand executeCommand) {
 	command.param4 = pp4;
 	command.param5 = pp5;
 	command.tcmd = ptcmd;
-	
+
 
 	return command;
 }
@@ -527,10 +527,10 @@ int main(int argc, char *argv[]) {
 
 	int i = MAX_CMD_NAVDATA;
 	socklen_t len = sizeof(addr_drone);
-	
+
 	// Struct for handling timeout
 	struct timeval tv;
-	
+
 	// set a timeout
 	tv.tv_sec = 0;
   	tv.tv_usec = 100000; // 100ms
@@ -538,7 +538,7 @@ int main(int argc, char *argv[]) {
   	Command command;
 
   	ROS_INFO("Adresse ip : %s", cstr);
-	
+
 	// Open the UDP port for the cmd node
 	comfd = PikopterNetwork::open_udp_socket(PORT_CMD, &addr_drone, cstr);
 
@@ -568,18 +568,18 @@ int main(int argc, char *argv[]) {
 
 		// Erase buffer commandBuffer
 		memset(commandBuffer, 0, PACKET_SIZE);
-		
+
 		// fprintf(stderr, "Waiting packet from %s:%d\n", inet_ntoa(addr_drone.sin_addr), ntohs(addr_drone.sin_port));
-		
+
 		// need to add a watchdog here
 		int ret = recvfrom(comfd, commandBuffer, PACKET_SIZE, 0, (struct sockaddr*) &addr_drone, &len);
-		
+
 		// if we receive something...
-		if(ret > 0) {			
+		if(ret > 0) {
 			// Get command
 			//printf("%s\n", commandBuffer);
 			command = parseCommand((char *) commandBuffer, executeCommand);
-			
+
 			if(!command.cmd.empty()) {
 				//cout << "Command received : " << command.cmd << "\n";
 			}
@@ -598,7 +598,7 @@ int main(int argc, char *argv[]) {
 			// if time is out
 			if(errno != 11)
 			// 	ROS_ERROR("%s", "Receiving command time out \n");
-			
+
 			// // if other errors occured
 			// else
 				ROS_ERROR("Receiving command, %d, failed (errno: %d)\n", i, errno);
@@ -616,4 +616,3 @@ int main(int argc, char *argv[]) {
 	ros::shutdown();
 	return NO_ERROR_ENCOUNTERED;
 }
-

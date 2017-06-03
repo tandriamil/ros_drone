@@ -46,10 +46,10 @@ void waitForService(const std::string service) {
 int main(int argc, char *argv[]) {
 	// Initialize ros for this node
 	ros::init(argc, argv, "pikopter_test_takeoff");
-	
+
 	// Struct for handling timeout
 	struct timeval tv;
-	
+
 	// set a timeout
 	tv.tv_sec = 0;
   	tv.tv_usec = 100000; // 100ms
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     ros::ServiceClient tol_client = nh.serviceClient<mavros_msgs::CommandTOL>
             ("mavros/cmd/takeoff");
 
-	ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);	
+	ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 100);
 
 	mavros_msgs::SetMode srvGuided;
 	mavros_msgs::CommandTOL srvTakeOffLand;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/set_mode");
-	
+
 	ROS_INFO("Wait for set_mode service");
 	waitForService("/mavros/cmd/arming");
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 	msgMove.twist.angular.z = 0;
 
 	velocity_pub.publish(msgMove);
-	
+
 	ROS_INFO("Linear velocity -> x = %f, y = %f, z = %f", msgMove.twist.linear.x, msgMove.twist.linear.y, msgMove.twist.linear.z);
 	ROS_INFO("Angular velocity -> x = %f, y = %f, z = %f", msgMove.twist.angular.x, msgMove.twist.angular.y, msgMove.twist.angular.z);
 

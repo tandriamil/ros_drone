@@ -10,6 +10,7 @@ devel/lib/ros/cmd
 
 **catkin*
 **.catkin*
+!*catkin_workspace
 **CMakeLists.txt
 **CMakeCache.txt
 **CMakeFiles

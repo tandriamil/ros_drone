@@ -255,8 +255,8 @@ void PikopterNavdata::display() {
 		ROS_DEBUG("\n");
 
 		/* ##### Exit Critical Section ##### */
-		navdata_mutex.unlock();	
-	}	
+		navdata_mutex.unlock();
+	}
 }
 
 
@@ -317,7 +317,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 
 		// When the drone is in transition forward
 		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_FW: {
-			
+
 			/* ##### Enter Critical Section ##### */
 			navdata_mutex.lock();
 
@@ -330,7 +330,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 
 		// ???
 		case mavros_msgs::ExtendedState::VTOL_STATE_TRANSITION_TO_MC: {
-			
+
 			/* ##### Enter Critical Section ##### */
 			navdata_mutex.lock();
 
@@ -356,7 +356,7 @@ void PikopterNavdata::getExtendedState(const mavros_msgs::ExtendedState::ConstPt
 
 		// ???
 		case mavros_msgs::ExtendedState::VTOL_STATE_FW: {
-			
+
 			/* ##### Enter Critical Section ##### */
 			navdata_mutex.lock();
 

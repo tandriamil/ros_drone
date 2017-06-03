@@ -12,7 +12,7 @@
  * \return The file descriptor or -1 if error
  */
 int PikopterNetwork::open_udp_socket(int portnum, struct sockaddr_in *serv_addr, char *station_ip) {
-	
+
 	// The file descriptor
 	int listenfd = ERROR_ENCOUNTERED;
 
